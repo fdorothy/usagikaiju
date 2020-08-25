@@ -1,14 +1,15 @@
 import { DIRS } from 'rot-js/lib/index';
+import { Util } from './util'
 
 export class Player {
   constructor(x, y, game) {
-    this._x = x
-    this._y = y
+    this.x = x
+    this.y = y
     this.game = game
   }
 
   draw () {
-    this.game.display.draw(this._x, this._y, "@", "#ff0");
+    this.game.display.draw(this.x, this.y, "@", "#ff0");
   }
 
   act() {
@@ -32,15 +33,16 @@ export class Player {
 
     if (!(code in keyMap)) {return;}
     let diff = DIRS[8][keyMap[code]];
-    let newX = this._x + diff[0];
-    let newY = this._y + diff[1];
+    let newX = this.x + diff[0];
+    let newY = this.y + diff[1];
 
     let newKey = newX + "," + newY;
     if (!(newKey in this.game.map)) {return;}
 
-    this.game.display.draw(this._x, this._y, this.game.map[this._x+","+this._y]);
-    this._x = newX;
-    this._y = newY;
+    let key = Util.key(this.x, this.y)
+    this.game.display.draw(this.x, this.y, this.game.map[key]);
+    this.x = newX;
+    this.y = newY;
     this.draw();
     window.removeEventListener("keydown", this);
     this.game.engine.unlock();

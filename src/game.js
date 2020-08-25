@@ -1,16 +1,16 @@
 import { Map, Display, Scheduler, Engine, KEYS, RNG } from 'rot-js/lib/index';
 import { Player } from './player'
+import { Util } from './util'
 
 export class Game {
   constructor() {
-    console.log("hello, world");
     this.map = {};
     this.engine = null;
     this.player = null;
 
     this.display = new Display();
     document.body.appendChild(this.display.getContainer());
-    this._generateMap();
+    this.generateMap();
 
     let scheduler = new Scheduler.Simple();
     scheduler.add(this.player, true);
@@ -18,46 +18,42 @@ export class Game {
     this.engine.start();
   }
 
-  _generateMap() {
+  generateMap() {
     let digger = new Map.Digger();
     let freeCells = [];
 
     let digCallback = function(x, y, value) {
       if (value) {return;} /* do not store walls */
 
-      let key = x + "," + y;
+      let key = Util.key(x, y);
       freeCells.push(key);
       this.map[key] = ".";
     }
 
     digger.create(digCallback.bind(this));
 
-    this._generateBoxes(freeCells);
-    this._createPlayer(freeCells);
+    this.generateBoxes(freeCells);
+    this.createPlayer(freeCells);
 
-    this._drawWholeMap();
+    this.drawWholeMap();
   }
 
-  _createPlayer(freeCells) {
+  createPlayer(freeCells) {
     let index = Math.floor(RNG.getUniform() * freeCells.length);
     let key = freeCells.splice(index, 1)[0];
-    let parts = key.split(",");
-    let x = parseInt(parts[0]);
-    let y = parseInt(parts[1]);
+    let [x, y] = Util.parseKey(key)
     this.player = new Player(x, y, this);
   }
 
-  _drawWholeMap() {
+  drawWholeMap() {
     for (let key in this.map) {
-      let parts = key.split(",");
-      let x = parseInt(parts[0]);
-      let y = parseInt(parts[1]);
+      let [x, y] = Util.parseKey(key)
       this.display.draw(x, y, this.map[key]);
     }
     this.player.draw()
   }
 
-  _generateBoxes(freeCells) {
+  generateBoxes(freeCells) {
     for (let i=0; i<10; i++) {
       let index = Math.floor(RNG.getUniform() * freeCells.length);
       let key = freeCells.splice(index, 1)[0];
