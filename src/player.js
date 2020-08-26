@@ -13,6 +13,10 @@ export class Player {
   }
 
   act() {
+    if (this.game.dialogue.showing) {
+      return;
+    }
+
     this.game.engine.lock();
     /* wait for user input; do stuff when user hits a key */
     window.addEventListener("keydown", this);
