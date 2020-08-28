@@ -7,7 +7,12 @@ export class Dialogue {
     this.story = new Story(json);
     this.padding = 10
     this.resetText()
-    this.showing = true
+    this.showing = false
+  }
+
+  play(knot) {
+    this.story.ChoosePathString(knot);
+    this.showing = true;
     this.continue()
   }
 
@@ -78,11 +83,13 @@ export class Dialogue {
 
   continue() {
     if (this.story.canContinue) {
-      this.pushText(this.story.ContinueMaximally())
+      while (this.story.canContinue) {
+        this.pushText(this.story.Continue())
+      }
       let choices = this.story.currentChoices
       for (let i=0; i<choices.length; i++) {
         let choice = choices[i];
-        this.pushText(" %c{red}" + (i+1) + "%c{}: " + choice.text)
+        this.pushText("%c{red}" + (i+1) + "%c{}: " + choice.text)
       }
 
       if (choices.length == 0) {

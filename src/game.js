@@ -21,6 +21,8 @@ export class Game {
     scheduler.add(this.player, true);
     scheduler.add(this.dialogue, true);
 
+    this.dialogue.play("intro")
+
     this.engine = new Engine(scheduler);
     this.engine.start();
   }
