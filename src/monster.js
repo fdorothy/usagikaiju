@@ -1,5 +1,6 @@
 import { DIRS, Path } from 'rot-js/lib/index';
 import { Util } from './util'
+import { Combat } from './combat'
 
 export class Monster {
   constructor(x, y, game) {
@@ -8,8 +9,9 @@ export class Monster {
     this.game = game
     this.hp = 10
     this.maxHp = 10
-    this.str = 10
-    this.dex = 10
+    this.attack = 1
+    this.defense = 1
+    this.weapon = 0
     this.armor = 0
     this.token = 'm'
     this.color = 'red'
@@ -29,7 +31,7 @@ export class Monster {
       // no path to player
     }
     else if (path.length <= 2) {
-      this.attack()
+      this.combat()
     } else {
       path.shift()
       this.x = path[0][0]
@@ -37,8 +39,10 @@ export class Monster {
     }
   }
 
-  attack() {
-    console.log('monster attacks')
+  combat() {
+    const dmg = Combat.attack(this, this.game.player)
+    this.game.messages.push(`The monster attacks for ${dmg} damage.`)
+    this.game.player.hp -= dmg
   }
 
   pathToPlayer() {

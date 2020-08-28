@@ -20,9 +20,15 @@ export class Status {
     this.text('Dr. Lewis')
     this.text(this.bar("XP", p.xp, p.nextLevel, 'gray'))
     this.text(this.bar("HP", p.hp, p.maxHp, 'red'))
-    this.text(`STR: ${p.str}`)
-    this.text(`DEX: ${p.dex}`)
-    this.text(`ARMOR: ${p.armor}`)
+    this.text(`Attack: ${p.attack} ${this.modifier(p.weapon)}`)
+    this.text(`Defense: ${p.defense} ${this.modifier(p.armor)}`)
+    this.text(`Body: ${p.body}`)
+  }
+
+  modifier(value) {
+    if (value == 0) return ''
+    if (value < 0) return `(%c{red}${value}%c{}`
+    return `(${value})`
   }
 
   text(text) {

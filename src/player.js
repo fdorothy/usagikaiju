@@ -1,5 +1,6 @@
 import { DIRS } from 'rot-js/lib/index';
 import { Util } from './util'
+import { Combat } from './combat'
 
 export class Player {
   constructor(x, y, game) {
@@ -10,9 +11,11 @@ export class Player {
     this.maxHp = 10
     this.xp = 0
     this.nextLevel = 20
-    this.str = 10
-    this.dex = 10
+    this.attack = 1
+    this.defense = 1
+    this.body = 1
     this.armor = 0
+    this.weapon = 0
   }
 
   draw () {
@@ -28,6 +31,12 @@ export class Player {
     this.game.engine.lock();
     /* wait for user input; do stuff when user hits a key */
     window.addEventListener("keydown", this);
+  }
+
+  combat(monster) {
+    const dmg = Combat.attack(this.game.player, monster)
+    this.game.messages.push(`You attack monster for ${dmg} damage.`)
+    monster.hp -= dmg
   }
 
   handleEvent = (e) => {
@@ -55,6 +64,13 @@ export class Player {
     if (this.game.canPlayerMove(newX, newY)) {
       this.x = newX;
       this.y = newY;
+    } else {
+      const m = this.game.getMonster(newX, newY);
+      if (m) {
+        this.combat(m)
+      } else {
+        this.game.messages.push(`The stone wall is cold.`)
+      }
     }
     this.game.drawWholeMap();
     window.removeEventListener("keydown", this);
