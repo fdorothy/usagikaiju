@@ -1,4 +1,28 @@
--> intro
+-> title
+
+== title ==
+
+The Underground River
+
+by @redmountainman1 for Vulcan Jam 3
+
+ + [New Game]
+   :newgame
+   -> DONE
+ + [Help] -> help
+
+== help ==
+
+Your token on the map is \%c\{\#ff0\}@\%c\{\}
+
+Use the arrow keys to move.
+
+ * [How do I play]
+   You play by moving around the map, searching and fighting.
+   The map only extends to the bounds of the window.
+   Enemies will appear as tokens on the map. Be careful!
+   To attack an enemy, move towards it.
+   ** [OK] -> help
 
 == intro ==
 
@@ -16,6 +40,11 @@ The torchlight flickers off the cave walls.
 
 A rumble is heard, and the entrance is sealed.
 
+-> DONE
 
+== gameover ==
+
+You died.
+:restart
 
 -> DONE

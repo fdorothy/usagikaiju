@@ -6,10 +6,18 @@ export class Player {
     this.x = x
     this.y = y
     this.game = game
+    this.hp = 10
+    this.maxHp = 10
+    this.xp = 0
+    this.nextLevel = 20
+    this.str = 10
+    this.dex = 10
+    this.armor = 0
   }
 
   draw () {
-    this.game.display.draw(this.x, this.y, "@", "#ff0");
+    const [x, y] = this.game.worldToScreen([this.x, this.y])
+    this.game.display.draw(x, y, "@", "#ff0");
   }
 
   act() {
@@ -41,13 +49,14 @@ export class Player {
     let newY = this.y + diff[1];
 
     let newKey = newX + "," + newY;
-    if (!(newKey in this.game.map)) {return;}
 
     let key = Util.key(this.x, this.y)
     this.game.display.draw(this.x, this.y, this.game.map[key]);
-    this.x = newX;
-    this.y = newY;
-    this.draw();
+    if (this.game.canPlayerMove(newX, newY)) {
+      this.x = newX;
+      this.y = newY;
+    }
+    this.game.drawWholeMap();
     window.removeEventListener("keydown", this);
     this.game.engine.unlock();
   }

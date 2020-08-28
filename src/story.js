@@ -8,11 +8,14 @@ export class Dialogue {
     this.padding = 10
     this.resetText()
     this.showing = false
+    this.callback = null
   }
 
-  play(knot) {
+  play(knot, cb) {
     this.story.ChoosePathString(knot);
     this.showing = true;
+    this.callback = cb
+    this.resetText()
     this.continue()
   }
 
@@ -20,7 +23,6 @@ export class Dialogue {
     if (!this.showing) {
       return;
     }
-    console.log('drawing text: ' + this.text)
     let x0 = this.padding
     let y0 = this.padding
     let x1 = this.game.width-this.padding
@@ -35,7 +37,6 @@ export class Dialogue {
     for (let i=0; i<this.text.length; i++) {
       this.game.display.drawText(xy[0], xy[1], this.text[i], this.textWidth())
       let {width, height} = Text.measure(this.text[i])
-      console.log("drawing " + this.text[i] + ", y = " + height)
       xy[1] += height
     }
   }
@@ -50,7 +51,6 @@ export class Dialogue {
 
   act() {
     if (this.showing) {
-      console.log('waiting for input for story')
       this.game.engine.lock();
       /* wait for user input; do stuff when user hits a key */
       window.addEventListener("keydown", this);
@@ -59,11 +59,9 @@ export class Dialogue {
   }
 
   handleEvent = (e) => {
-    console.log('handling event')
     let choices = this.story.currentChoices
     if (choices.length > 0) {
       let i = event.key
-      console.log('got input: ' + i)
       if (i >= 1 && i < choices.length+1) {
         this.story.ChooseChoiceIndex(i-1)
         this.resetText()
@@ -72,8 +70,12 @@ export class Dialogue {
     if (event.keyCode == 13) {
       if (!this.story.canContinue && choices.length < 1) {
         this.showing = false
-        this.game.engine.unlock()
+        if (this.callback) {
+          this.callback()
+          this.callback = null
+        }
         this.game.drawWholeMap()
+        this.game.engine.unlock()
         return
       }
     }
@@ -83,8 +85,11 @@ export class Dialogue {
 
   continue() {
     if (this.story.canContinue) {
+      let events = []
       while (this.story.canContinue) {
-        this.pushText(this.story.Continue())
+        const text = this.fetchText(events)
+        if (text != null)
+          this.pushText(text)
       }
       let choices = this.story.currentChoices
       for (let i=0; i<choices.length; i++) {
@@ -95,6 +100,21 @@ export class Dialogue {
       if (choices.length == 0) {
         this.pushText("\nPush %c{red}enter%c{} to continue")
       }
+      this.handleStoryEvents(events)
+    }
+  }
+
+  handleStoryEvents(events) {
+    events.forEach((e) => { this.game.handleStoryEvent(e) })
+  }
+
+  fetchText(events) {
+    const text = this.story.Continue()
+    if (text[0] == ":") {
+      events.push(text.trim().split(", "))
+      return null
+    } else {
+      return text
     }
   }
 
