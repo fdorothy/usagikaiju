@@ -1,4 +1,4 @@
-import { Map, Display, Scheduler, Engine, KEYS, RNG } from 'rot-js/lib/index';
+import { Map, Display, Engine, KEYS, RNG } from 'rot-js/lib/index';
 import { Player } from './player'
 import { Util } from './util'
 import { Dialogue } from './story'
@@ -24,14 +24,14 @@ export class Game {
     this.messages = new Messages(this, this.statusWidth+2, this.messageHeight-1);
     this.status = new Status(this, this.statusWidth)
 
-    this.scheduler = new Scheduler.Simple();
+    this.restart()
+    this.mainLoop()
+  }
+
+  restart() {
     this.player = new Player(0, 0, this)
     this.monsters = []
-    this.scheduler.add(this.player, true)
-    this.scheduler.add(this.dialogue, true);
     this.dialogue.play("title")
-    this.engine = new Engine(this.scheduler);
-    this.engine.start();
   }
 
   newGame() {
@@ -40,13 +40,9 @@ export class Game {
 
   startLevel() {
     this.generateMap();
-    this.monsters.forEach((m) => this.scheduler.add(m, true));
     this.dialogue.play("intro", () => {
       this.messages.push("Use the arrow keys to move")
     })
-  }
-
-  setupGamePlayScheduler() {
   }
 
   handleStoryEvent(event) {
@@ -55,7 +51,37 @@ export class Game {
     case ':newgame':
       this.newGame()
       break;
+    case ':restart':
+      this.restart()
     default: break;
+    }
+  }
+
+  async mainLoop() {
+    while (1) {
+      if (this.dialogue.showing) {
+        console.log('dialogue turn')
+        await this.dialogue.act()
+      } else {
+        console.log('start of turn')
+        await this.player.act()
+        this.removeDeadMonsters()
+        for (let i=0; i<this.monsters.length; i++) {
+          await this.monsters[i].act()
+        }
+        this.checkGameOver()
+        this.drawWholeMap()
+      }
+    }
+  }
+
+  removeDeadMonsters() {
+    this.monsters = this.monsters.filter(m => !m.dead)
+  }
+
+  checkGameOver() {
+    if (this.player.dead) {
+      this.dialogue.play("gameover")
     }
   }
 

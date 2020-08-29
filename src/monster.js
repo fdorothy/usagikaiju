@@ -1,25 +1,14 @@
 import { DIRS, Path } from 'rot-js/lib/index';
 import { Util } from './util'
 import { Combat } from './combat'
+import { Actor } from './actor'
 
-export class Monster {
+export class Monster extends Actor {
   constructor(x, y, game) {
-    this.x = x
-    this.y = y
-    this.game = game
-    this.hp = 10
-    this.maxHp = 10
-    this.attack = 1
-    this.defense = 1
-    this.weapon = 0
-    this.armor = 0
-    this.token = 'm'
-    this.color = 'red'
-  }
-
-  draw () {
-    const [x, y] = this.game.worldToScreen([this.x, this.y])
-    this.game.display.draw(x, y, this.token, this.color);
+    super(x, y, game)
+    this.setStats(10, 1, 1, 0, 0)
+    this.setToken('m', 'red')
+    this.name = 'Monster'
   }
 
   act() {
@@ -31,7 +20,7 @@ export class Monster {
       // no path to player
     }
     else if (path.length <= 2) {
-      this.combat()
+      this.combat(this.game.player)
     } else {
       path.shift()
       this.x = path[0][0]
@@ -39,10 +28,15 @@ export class Monster {
     }
   }
 
-  combat() {
-    const dmg = Combat.attack(this, this.game.player)
-    this.game.messages.push(`The monster attacks for ${dmg} damage.`)
-    this.game.player.hp -= dmg
+  onCombat(damage, other) {
+    const name = this.coloredName()
+    const otherName = other.colored('you')
+    if (damage) {
+      let dmg = `%c{red}${damage}%c{}`
+      this.game.messages.push(`The ${name} hits ${otherName} for ${dmg} damage.`)
+    } else {
+      this.game.messages.push(`${name()} missed ${otherName}.`)
+    }
   }
 
   pathToPlayer() {

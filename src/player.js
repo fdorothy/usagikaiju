@@ -1,45 +1,50 @@
 import { DIRS } from 'rot-js/lib/index';
 import { Util } from './util'
 import { Combat } from './combat'
+import { Actor } from './actor'
 
-export class Player {
+export class Player extends Actor {
   constructor(x, y, game) {
-    this.x = x
-    this.y = y
-    this.game = game
-    this.hp = 10
-    this.maxHp = 10
+    super(x, y, game)
+    this.setToken('@', '#ff0')
     this.xp = 0
     this.nextLevel = 20
+    this.hp = 10
+    this.maxHp = 10
     this.attack = 1
     this.defense = 1
     this.body = 1
     this.armor = 0
     this.weapon = 0
-  }
-
-  draw () {
-    const [x, y] = this.game.worldToScreen([this.x, this.y])
-    this.game.display.draw(x, y, "@", "#ff0");
+    this.promise = null
   }
 
   act() {
     if (this.game.dialogue.showing) {
-      return;
+      return Promise.resolve(true);
     }
 
-    this.game.engine.lock();
-    /* wait for user input; do stuff when user hits a key */
-    window.addEventListener("keydown", this);
+    const handleEvent = this.handleEvent
+    return new Promise(function(resolve) {
+      /* wait for user input; do stuff when user hits a key */
+      window.addEventListener("keydown", (e) => {
+        handleEvent(e, resolve)
+      }, {once: true})
+    })
   }
 
-  combat(monster) {
-    const dmg = Combat.attack(this.game.player, monster)
-    this.game.messages.push(`You attack monster for ${dmg} damage.`)
-    monster.hp -= dmg
+  onCombat(damage, other) {
+    const name = this.colored('You')
+    const otherName = other.coloredName()
+    if (damage) {
+      let dmg = `%c{red}${damage}%c{}`
+      this.game.messages.push(`${name} hit ${otherName} for ${dmg} damage.`)
+    } else {
+      this.game.messages.push(`${name} missed ${otherName}.`)
+    }
   }
 
-  handleEvent = (e) => {
+  handleEvent = (e, resolve) => {
     let keyMap = {};
     keyMap[38] = 0;
     keyMap[33] = 1;
@@ -52,7 +57,10 @@ export class Player {
 
     let code = e.keyCode;
 
-    if (!(code in keyMap)) {return;}
+    if (!(code in keyMap)) {
+      resolve(false)
+      return;
+    }
     let diff = DIRS[8][keyMap[code]];
     let newX = this.x + diff[0];
     let newY = this.y + diff[1];
@@ -73,7 +81,6 @@ export class Player {
       }
     }
     this.game.drawWholeMap();
-    window.removeEventListener("keydown", this);
-    this.game.engine.unlock();
+    resolve(true)
   }
 }

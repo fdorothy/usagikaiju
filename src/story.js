@@ -17,6 +17,7 @@ export class Dialogue {
     this.callback = cb
     this.resetText()
     this.continue()
+    this.waitForEvent = null
   }
 
   draw() {
@@ -51,14 +52,18 @@ export class Dialogue {
 
   act() {
     if (this.showing) {
-      this.game.engine.lock();
-      /* wait for user input; do stuff when user hits a key */
-      window.addEventListener("keydown", this);
       this.draw()
+      const handleEvent = this.handleEvent
+      return new Promise(function(resolve) {
+        window.addEventListener("keydown", (e) => {
+          handleEvent(e, resolve)
+        }, {once: true})
+      })
     }
+    return Promise.resolve(true)
   }
 
-  handleEvent = (e) => {
+  handleEvent = (e, resolve) => {
     let choices = this.story.currentChoices
     if (choices.length > 0) {
       let i = event.key
@@ -75,10 +80,11 @@ export class Dialogue {
           this.callback = null
         }
         this.game.drawWholeMap()
-        this.game.engine.unlock()
+        resolve(true)
         return
       }
     }
+    resolve(true)
     this.continue()
     this.draw()
   }
