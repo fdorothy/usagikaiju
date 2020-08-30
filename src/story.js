@@ -70,10 +70,17 @@ export class Dialogue {
       if (i >= 1 && i < choices.length+1) {
         this.story.ChooseChoiceIndex(i-1)
         this.resetText()
+        this.continue()
       }
     }
     if (event.keyCode == 13) {
-      if (!this.story.canContinue && choices.length < 1) {
+      if (this.story.canContinue) {
+        this.resetText()
+        this.continue()
+        resolve(true)
+        return
+      }
+      else if (!this.story.canContinue && choices.length < 1) {
         this.showing = false
         if (this.callback) {
           this.callback()
@@ -84,17 +91,22 @@ export class Dialogue {
       }
     }
     resolve(true)
-    this.continue()
     this.draw()
   }
 
   continue() {
+    console.log('calling continue')
     if (this.story.canContinue) {
       let events = []
-      while (this.story.canContinue) {
+      let br = false
+      while (this.story.canContinue && !br) {
         const text = this.fetchText(events)
-        if (text != null)
+        console.log(text)
+        if (text != null && text != ":br") {
           this.pushText(text)
+        } else if (text == ":br") {
+          br = true
+        }
       }
       let choices = this.story.currentChoices
       for (let i=0; i<choices.length; i++) {
@@ -115,7 +127,9 @@ export class Dialogue {
 
   fetchText(events) {
     const text = this.story.Continue()
-    if (text[0] == ":") {
+    if (text.trim() == ":br") {
+       return ":br"
+    } else if (text[0] == ":") {
       events.push(text.trim().split(", "))
       return null
     } else {
