@@ -79,7 +79,6 @@ export class Dialogue {
           this.callback()
           this.callback = null
         }
-        this.game.drawWholeMap()
         resolve(true)
         return
       }

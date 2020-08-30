@@ -17,6 +17,7 @@ export class Player extends Actor {
     this.armor = 0
     this.weapon = 0
     this.promise = null
+    this.name = 'player'
   }
 
   act() {
@@ -68,7 +69,6 @@ export class Player extends Actor {
     let newKey = newX + "," + newY;
 
     let key = Util.key(this.x, this.y)
-    this.game.display.draw(this.x, this.y, this.game.map[key]);
     if (this.game.canPlayerMove(newX, newY)) {
       this.x = newX;
       this.y = newY;
@@ -80,7 +80,6 @@ export class Player extends Actor {
         this.game.messages.push(`The stone wall is cold.`)
       }
     }
-    this.game.drawWholeMap();
     resolve(true)
   }
 }

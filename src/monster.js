@@ -6,25 +6,29 @@ import { Actor } from './actor'
 export class Monster extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
-    this.setStats(10, 1, 1, 0, 0)
+    this.setStats(3, 1, 1, 0, 0)
     this.setToken('m', 'red')
     this.name = 'Monster'
+    this.chasing = false
   }
 
   act() {
     if (this.game.dialogue.showing) {
       return;
     }
-    let path = this.pathToPlayer()
-    if (path.length == 0) {
-      // no path to player
-    }
-    else if (path.length <= 2) {
-      this.combat(this.game.player)
-    } else {
-      path.shift()
-      this.x = path[0][0]
-      this.y = path[0][1]
+    const key = Util.key(this.x, this.y)
+    if (key in this.game.fov) {
+      let path = this.pathToPlayer()
+      if (path.length == 0) {
+        // no path to player
+      }
+      else if (path.length <= 2) {
+        this.combat(this.game.player)
+      } else {
+        path.shift()
+        this.x = path[0][0]
+        this.y = path[0][1]
+      }
     }
   }
 

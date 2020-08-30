@@ -19,9 +19,13 @@ export class Actor {
     this.color = color
   }
 
-  draw () {
-    const [x, y] = this.game.worldToScreen([this.x, this.y])
-    this.game.display.draw(x, y, this.token, this.color);
+  draw (fov) {
+    const key = Util.key(this.x, this.y)
+    if (fov == undefined || key in fov) {
+      console.log('drawing ' + this.name)
+      const [x, y] = this.game.worldToScreen([this.x, this.y])
+      this.game.display.draw(x, y, this.token, this.color);
+    }
   }
 
   combat(other) {
