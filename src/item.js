@@ -9,12 +9,16 @@ export class Item extends Actor {
     this.setToken('i', 'red')
     this.onPickup = null
     this.pickedUp = false
+    this.story = null
   }
 
   pickup(player) {
     this.pickedUp = true
     if (this.onPickup != null) {
       this.onPickup(player)
+    }
+    if (this.story) {
+      this.game.dialogue.play(this.story)
     }
   }
 

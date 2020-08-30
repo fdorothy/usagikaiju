@@ -31,49 +31,77 @@ To attack an enemy, move towards it.
 
 == level1 ==
 
-The torchlight flickers off the cave walls.
+Your electric torch flickers off the cave walls.
 
 :br
 
-The cave was found earlier in the day by some kids.
-They said they moved some rocks out of the way by a creek <>
-near Birmingham
+You're looking for the boy. His friends said he crawled down the sinkhole earlier in the day.
 
 :br
 
-I'd bet anything there's a cache of alcohol in there, the miners <>
-like to hide it in caves.
+It looks scary down here. It looks like a network of passages with a stream flowing through them.
 
-:br
-
-You find a \%c\{red\}swiss army knife\%c\{\} on the cave ground
-
-:br
-
-A rumble is heard, and the entrance is sealed.
-
-You must continue on the passage to find your way out.
-
-:br
+ + [Call up for help] ->
+   The police officer tosses you a helmet.
+   :levelup, defense
+   -> DONE
+ + [Look around] ->
+   You find a \%c\{red\}swiss army knife\%c\{\} on the cave ground.
+   :levelup, attack
+   -> DONE
+ + [Bravely push forward] ->
+   You are filled with courage.
+   :levelup, hp
+   -> DONE
 
 -> DONE
 
 == level2 ==
 
-A small stream leads from the cave here.
+You come to another hole.
 
-A boat is tied to a rock on the beach.
-
--> DONE
+ + [Investigate]
+   There are small footprints near here. Perhaps they belong to the boy?
+   :br
+   -> level2
+ + [Go down]
+   You descend down the hole, and slip on the steep slope.
+   -> DONE
 
 == level3 ==
 
-You follow this passage for some distance and come out to light.
+The underground river continues on here. You see small footprints.
 
-You've escaped the underground river!
+You must be on the right track.
+
+-> DONE
+
+== level4 ==
+
+The underground river goes through a narrow passage here. You see light ahead.
+
+:br
+
+The boy gives you a hug as you finally make your way out, several miles from town.
+
+:br
+
+The stream connects here with a larger river. The boy sits down, breathless, as you wave and shout at curious onlookers on a passing riverboat.
 
 :br
 :restart
+
+-> DONE
+
+== boy ==
+
+The boy cowers from you.
+
+:br
+
+"Have no fear, I'm Dr. Lewis, you say. I'm here to help."
+
+The boy looks at you and smiles, taking your hand.
 
 -> DONE
 
@@ -83,5 +111,45 @@ You died.
 
 :br
 :restart
+
+-> DONE
+
+
+== levelup ==
+
+You've leveled up! How would you like to spend your experience?
+
+ + [Increase HP] ->
+   :levelup, hp
+   -> DONE
+ + [Increase Attack] ->
+   :levelup, attack
+   -> DONE
+ + [Increase Defense] ->
+   :levelup, defense
+   -> DONE
+
+== ghost ==
+
+You see the ghost of an old confederate soldier ahead. His spectral face is full of hatred as he reaches for his sword.
+
+-> DONE
+
+== printing_press ==
+
+A printing press is setup down here. You see many pages scattered around, some dated from the early 1800's.
+
+:br
+
+One pamphlet reads:
+
+"If there is no struggle, there is no progress. Those who profess to favor freedom, and deprecate agitation, are men who want crops without plowing up the ground, they want rain without thunder and lightning.
+
+-- Frederick Douglass"
+
+:br
+
+You find a map of the underground river. This could be useful.
+:map
 
 -> DONE

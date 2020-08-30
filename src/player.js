@@ -15,7 +15,7 @@ export class Player extends Actor {
     this.defense = 1
     this.body = 1
     this.armor = 0
-    this.weapon = 0
+    this.weapon = 2
     this.promise = null
     this.name = 'player'
   }
@@ -51,6 +51,7 @@ export class Player extends Actor {
       this.xp = this.xp - this.nextLevel
       this.nextLevel = Math.trunc(this.nextLevel * 1.5)
       this.hp = this.maxHp
+      this.game.dialogue.play('levelup')
     }
   }
 

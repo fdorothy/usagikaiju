@@ -6,7 +6,7 @@ export class Actor {
     this.x = x
     this.y = y
     this.game = game
-    this.setStats(10, 1, 1, 0, 0)
+    this.setStats(10, 1, 1, 2, 0)
     this.token = 'x'
     this.color = 'white'
     this.name = 'Monster'

@@ -32,8 +32,24 @@ export class Game {
     this.player = new Player(0, 0, this)
     this.monsters = []
     this.items = []
+    this.createSpecialRooms()
     this.level = 1
+    this.hasMap = false
     this.dialogue.play("title")
+  }
+
+  createSpecialRooms() {
+    this.specialRooms = [
+      this.createSpecialRoom('Old Printing Press', 'printing_press')
+    ]
+  }
+
+  createSpecialRoom(name, story) {
+    let item = new Item(0, 0, this)
+    item.name = name
+    item.setToken('?', 'white')
+    item.story = story
+    return item
   }
 
   onExit() {
@@ -53,13 +69,35 @@ export class Game {
   }
 
   handleStoryEvent(event) {
-    const name = event[0]
+    const name = event[0].trim()
     switch (name) {
     case ':newgame':
       this.newGame()
       break;
     case ':restart':
       this.restart()
+      break;
+    case ':levelup':
+      switch (event[1].trim()) {
+      case 'hp':
+        this.player.hp += 5
+        this.player.maxHp += 5
+        this.messages.push("Hitpoints increased by 5")
+        break;
+      case 'attack':
+        this.player.attack += 1
+        this.messages.push("Attack increased by 1")
+        break;
+      case 'defense':
+        this.player.defense += 1
+        this.messages.push("Defense increased by 1")
+        break;
+      default: break
+      }
+      break;
+    case ':map':
+      this.hasMap = true
+      break;
     default: break;
     }
   }
@@ -162,6 +200,7 @@ export class Game {
 
     this.setPlayerPositionRandom();
     this.placeExit()
+    this.placeSpecialRoom()
     this.placeMonstersAndItemsInRooms()
   }
 
@@ -194,6 +233,14 @@ export class Game {
     this.items.push(exit)
   }
 
+  placeSpecialRoom() {
+    let specialRoom = this.specialRooms.pop()
+    if (specialRoom) {
+      let room = this.nextRoom()
+      this.placeItem(room, specialRoom)
+    }
+  }
+
   placeMonstersAndItemsInRooms() {
     let room
     const contents = {
@@ -213,6 +260,13 @@ export class Game {
         break;
       }
     }
+  }
+
+  placeItem(room, item) {
+    const [x, y] = this.roomCenter(room)
+    item.x = x
+    item.y = y
+    this.items.push(item)
   }
 
   placePotion(room) {
@@ -265,7 +319,8 @@ export class Game {
   }
 
   drawCompositeMap() {
-    for (let key in this.knownMap) {
+    const map = this.hasMap ? this.map : this.knownMap
+    for (let key in map) {
       const [x, y] = this.worldToScreen(Util.parseKey(key))
       let color = Color.toHex(Util.minGray)
       if (key in this.fov) {
@@ -282,7 +337,7 @@ export class Game {
     this.drawCompositeMap()
     this.player.draw()
     this.monsters.forEach((m) => m.draw(this.fov))
-    this.items.forEach((m) => m.draw(this.knownMap))
+    this.items.forEach((m) => m.draw(this.hasMap ? this.map : this.knownMap))
     if (this.dialogue)
       this.dialogue.draw()
     if (this.messages)

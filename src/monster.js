@@ -6,7 +6,7 @@ import { Actor } from './actor'
 export class Monster extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
-    this.setStats(3, 1, 1, 0, 0)
+    this.setStats(3, 1, 1, 2, 0)
     this.xp = 6
     this.setToken('m', 'red')
     this.name = 'Monster'
@@ -40,7 +40,7 @@ export class Monster extends Actor {
       let dmg = `%c{red}${damage}%c{}`
       this.game.messages.push(`The ${name} hits ${otherName} for ${dmg} damage.`)
     } else {
-      this.game.messages.push(`${name()} missed ${otherName}.`)
+      this.game.messages.push(`${name} missed ${otherName}.`)
     }
   }
 

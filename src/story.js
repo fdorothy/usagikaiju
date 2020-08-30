@@ -35,11 +35,8 @@ export class Dialogue {
 
   drawText() {
     let xy = [this.padding+1, this.padding+1]
-    for (let i=0; i<this.text.length; i++) {
-      this.game.display.drawText(xy[0], xy[1], this.text[i], this.textWidth())
-      let {width, height} = Text.measure(this.text[i])
-      xy[1] += height
-    }
+    const text = this.text.join('\n\n')
+    this.game.display.drawText(xy[0], xy[1], text, this.textWidth())
   }
 
   pushText(text) {
@@ -130,15 +127,15 @@ export class Dialogue {
     if (text.trim() == ":br") {
        return ":br"
     } else if (text[0] == ":") {
-      events.push(text.trim().split(", "))
+      events.push(text.trim().split(","))
       return null
     } else {
-      return text
+      return text.trim()
     }
   }
 
   textWidth() {
-    return this.game.width - this.padding * 2
+    return this.game.width - this.padding * 2 - 1
   }
 
   drawBox(x0, y0, x1, y1, v) {
