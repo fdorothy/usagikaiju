@@ -62,6 +62,7 @@ export class Dialogue {
   }
 
   handleEvent = (e, resolve) => {
+    e.preventDefault()
     let choices = this.story.currentChoices
     if (choices.length > 0) {
       let i = event.key

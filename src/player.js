@@ -82,6 +82,7 @@ export class Player extends Actor {
       resolve(false)
       return;
     }
+    e.preventDefault()
     let diff = DIRS[8][keyMap[code]];
     let newX = this.x + diff[0];
     let newY = this.y + diff[1];
