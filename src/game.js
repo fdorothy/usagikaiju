@@ -54,6 +54,7 @@ export class Game {
 
   onExit() {
     this.level++
+    this.hasMap = false
     this.startLevel()
   }
 
@@ -151,13 +152,15 @@ export class Game {
   canMonsterMove(x, y) {
     if (this.getMonster(x, y))
       return false
-    return ((x+","+y in this.map))
+    const key = Util.key(x,y)
+    return ((key in this.map && this.map[key] != '#'))
   }
 
   canPlayerMove(x, y) {
     if (this.getMonster(x, y))
       return false
-    return ((x+","+y in this.map))
+    const key = Util.key(x,y)
+    return ((key in this.map && this.map[key] != '#'))
   }
 
   getMonster(x, y) {
@@ -187,11 +190,13 @@ export class Game {
     let freeCells = [];
 
     let digCallback = function(x, y, value) {
-      if (value) {return;} /* do not store walls */
-
       let key = Util.key(x, y);
-      freeCells.push(key);
-      this.map[key] = ".";
+      if (value) {
+        this.map[key] = "#";
+      } else {
+        this.map[key] = ".";
+        freeCells.push(key);
+      }
     }
 
     digger.create(digCallback.bind(this));
@@ -297,7 +302,8 @@ export class Game {
   drawWholeMap() {
     for (let key in this.map) {
       const [x, y] = this.worldToScreen(Util.parseKey(key))
-      this.display.draw(x, y, this.map[key]);
+      const v = this.map[key];
+      this.display.draw(x, y, v)
     }
   }
 
@@ -305,7 +311,7 @@ export class Game {
     const game = this
     let fov = new FOV.PreciseShadowcasting((x, y) => {
       var key = x+","+y;
-      if (key in game.map) { return (game.map[key]); }
+      if (key in game.map) { return (game.map[key] === '.'); }
       return false;
     });
 
@@ -313,6 +319,7 @@ export class Game {
     this.fov = {}
     fov.compute(this.player.x, this.player.y, 10, function(x, y, r, visibility) {
       const key = Util.key(x,y)
+      const [sx, sy] = game.worldToScreen([x, y])
       game.fov[key] = r
       game.knownMap[key] = 1
     });
@@ -323,11 +330,17 @@ export class Game {
     for (let key in map) {
       const [x, y] = this.worldToScreen(Util.parseKey(key))
       let color = Color.toHex(Util.minGray)
+      let bg = 'black'
+      let v = this.map[key]
       if (key in this.fov) {
         const light = this.fov[key]
-        color = Util.grayscale(1.0 - this.fov[key] / 10.0)
+        if (v == '#') {
+          color = Util.grayscale(1.0 - this.fov[key] / 10.0)
+        } else {
+          color = Util.grayscale(1.0 - this.fov[key] / 10.0)
+        }
       }
-      this.display.draw(x, y, this.map[key], color)
+      this.display.draw(x, y, this.map[key], color, bg)
     }
   }
 
