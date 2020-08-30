@@ -13,7 +13,7 @@ by @redmountainman1 for Vulcan Jam 3
 
 == help ==
 
-Your token on the map is \%c\{\#ff0\}@\%c\{\}
+Your token on the map is \%c\{\#f6ad0f\}@\%c\{\}
 
 Use the arrow keys to move.
 
@@ -46,7 +46,7 @@ It looks scary down here. It looks like a network of passages with a stream flow
    :levelup, defense
    -> DONE
  + [Look around] ->
-   You find a \%c\{red\}swiss army knife\%c\{\} on the cave ground.
+   You find a \%c\{\#d3473d\}swiss army knife\%c\{\} on the cave ground.
    :levelup, attack
    -> DONE
  + [Bravely push forward] ->

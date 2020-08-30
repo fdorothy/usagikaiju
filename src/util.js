@@ -2,11 +2,16 @@ import { Color } from 'rot-js/lib/index';
 
 
 export class Util {
-  static minGray = [30, 0, 0];
-  static maxGray = [255, 180, 180];
+  static colors = {
+    'bright': '#f5efeb',
+    'blood': '#d3473d',
+    'water': '#316a96',
+    'important': '#f6ad0f',
+    'dark': '#2e243f'
+  }
 
-  static wallColorMin = [50, 20, 20];
-  static wallColorMax = [255, 200, 200];
+  static minGray = Color.fromString(Util.colors.dark);
+  static maxGray = Color.fromString(Util.colors.bright);
 
   static key(x, y) {
     return x + "," + y
@@ -25,13 +30,5 @@ export class Util {
     if (value < 0.0)
       value = 0.0
     return Color.toHex(Color.interpolate(Util.minGray, Util.maxGray, value))
-  }
-
-  static wallColor(value) {
-    if (value > 1.0)
-      value = 1.0
-    if (value < 0.0)
-      value = 0.0
-    return Color.toHex(Color.interpolate(Util.wallColorMin, Util.wallColorMax, value))
   }
 }

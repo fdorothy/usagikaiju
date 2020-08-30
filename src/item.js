@@ -6,7 +6,7 @@ import { Actor } from './actor'
 export class Item extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
-    this.setToken('i', 'red')
+    this.setToken('i', Util.colors.blood)
     this.onPickup = null
     this.pickedUp = false
     this.story = null

@@ -1,5 +1,6 @@
 let Story = require('inkjs').Story;
 import { Text } from 'rot-js/lib/index';
+import { Util } from './util'
 
 export class Status {
   constructor(game, width) {
@@ -18,16 +19,17 @@ export class Status {
   drawHero() {
     const p = this.game.player
     this.text('Dr. Lewis')
-    this.text(this.bar("XP", p.xp, p.nextLevel, 'gray'))
-    this.text(this.bar("HP", p.hp, p.maxHp, 'red'))
+    this.text(this.bar("XP", p.xp, p.nextLevel, Util.colors.water))
+    this.text(this.bar("HP", p.hp, p.maxHp, Util.colors.blood))
     this.text(`Attack: ${p.attack} ${this.modifier(p.weapon)}`)
     this.text(`Defense: ${p.defense} ${this.modifier(p.armor)}`)
     this.text(`Body: ${p.body}`)
   }
 
   modifier(value) {
+    const color = Util.colors.important
     if (value == 0) return ''
-    if (value < 0) return `(%c{red}${value}%c{}`
+    if (value < 0) return `(%c{${color}}${value}%c{}`
     return `(${value})`
   }
 

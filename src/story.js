@@ -1,5 +1,6 @@
 let Story = require('inkjs').Story;
 import { Text } from 'rot-js/lib/index';
+import { Util } from './util'
 
 export class Dialogue {
   constructor(json, game) {
@@ -93,6 +94,7 @@ export class Dialogue {
 
   continue() {
     console.log('calling continue')
+    const color = Util.colors.important
     if (this.story.canContinue) {
       let events = []
       let br = false
@@ -108,11 +110,11 @@ export class Dialogue {
       let choices = this.story.currentChoices
       for (let i=0; i<choices.length; i++) {
         let choice = choices[i];
-        this.pushText("%c{red}" + (i+1) + "%c{}: " + choice.text)
+        this.pushText(`%c{${color}}` + (i+1) + "%c{}: " + choice.text)
       }
 
       if (choices.length == 0) {
-        this.pushText("\nPush %c{red}enter%c{} to continue")
+        this.pushText(`Push %c{${color}}enter%c{} to continue`)
       }
       this.handleStoryEvents(events)
     }

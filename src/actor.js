@@ -8,7 +8,8 @@ export class Actor {
     this.game = game
     this.setStats(10, 1, 1, 2, 0)
     this.token = 'x'
-    this.color = 'white'
+    this.color = Util.colors.important
+    this.background = 'black'
     this.name = 'Monster'
     this.dead = false
     this.lastHit = null
@@ -24,7 +25,7 @@ export class Actor {
     if (fov == undefined || key in fov) {
       console.log('drawing ' + this.name)
       const [x, y] = this.game.worldToScreen([this.x, this.y])
-      this.game.display.draw(x, y, this.token, this.color);
+      this.game.display.draw(x, y, this.token, this.color, this.background);
     }
   }
 

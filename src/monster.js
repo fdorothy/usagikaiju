@@ -8,7 +8,7 @@ export class Monster extends Actor {
     super(x, y, game)
     this.setStats(3, 1, 1, 2, 0)
     this.xp = 6
-    this.setToken('m', 'red')
+    this.setToken('m', Util.colors.blood)
     this.name = 'Monster'
     this.chasing = false
   }
@@ -37,8 +37,9 @@ export class Monster extends Actor {
     const name = this.coloredName()
     const otherName = other.colored('you')
     if (damage) {
-      let dmg = `%c{red}${damage}%c{}`
-      this.game.messages.push(`The ${name} hits ${otherName} for ${dmg} damage.`)
+      const blood = Util.colors.blood
+      let dmg = `%c{${blood}}${damage}%c{}`
+      this.game.messages.push(`The ${name} hits ${otherName} for %c{${blood}}${dmg}%c{} damage.`)
     } else {
       this.game.messages.push(`${name} missed ${otherName}.`)
     }

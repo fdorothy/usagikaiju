@@ -14,7 +14,7 @@ export class Game {
     this.player = null;
     this.width = 100
     this.height = 40
-    this.display = new Display({width: this.width, height: this.height});
+    this.display = new Display({width: this.width, height: this.height, fg: Util.colors.bright, bg: 'black'});
     document.body.appendChild(this.display.getContainer());
     this.statusWidth = 15
     this.messageHeight = 4
@@ -50,7 +50,7 @@ export class Game {
   createSpecialRoom(name, story) {
     let item = new Item(0, 0, this)
     item.name = name
-    item.setToken('?', 'white')
+    item.setToken('?', Util.colors.important)
     item.story = story
     return item
   }
@@ -259,7 +259,8 @@ export class Game {
     const exit = new Item(x, y, this)
     exit.name = 'exit'
     exit.token = '~'
-    exit.color = 'blue'
+    exit.color = Util.colors.bright
+    exit.background = Util.colors.water
     exit.onPickup = (player) => {
       this.onExit()
     }
@@ -272,7 +273,8 @@ export class Game {
     const exit = new Item(x, y, this)
     exit.name = 'exit'
     exit.token = '~'
-    exit.color = 'blue'
+    exit.color = Util.colors.bright
+    exit.background = Util.colors.water
     exit.onPickup = (player, item) => {
       if (this.hasBoy) {
         this.onExit()
@@ -334,7 +336,7 @@ export class Game {
     const item = new Item(x, y, this)
     item.name = 'potion'
     item.token = 'p'
-    item.color = 'green'
+    item.color = Util.colors.important
     item.onPickup = (player) => {
       this.messages.push('You found a tonic. Health increases by 5')
       this.player.heal(5)
