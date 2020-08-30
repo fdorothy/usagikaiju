@@ -28,6 +28,8 @@ export class Game {
     this.mainLoop()
   }
 
+  static debug = true
+
   restart() {
     this.player = new Player(0, 0, this)
     this.monsters = []
@@ -40,7 +42,8 @@ export class Game {
 
   createSpecialRooms() {
     this.specialRooms = [
-      this.createSpecialRoom('Old Printing Press', 'printing_press')
+      this.createSpecialRoom('Old Printing Press', 'printing_press'),
+      this.createSpecialRoom('Dinosaur Skeleton', 'dinosaur_skeleton')
     ]
   }
 
@@ -93,12 +96,18 @@ export class Game {
         this.player.defense += 1
         this.messages.push("Defense increased by 1")
         break;
+      case 'weapon':
+        this.player.weapon += parseInt(event[2].trim())
+        this.messages.push("You pickup a new weapon.")
+        break;
       default: break
       }
       break;
     case ':map':
       this.hasMap = true
       break;
+    case ':boy':
+      this.hasBoy = true
     default: break;
     }
   }
@@ -204,9 +213,28 @@ export class Game {
     this.freeRooms = RNG.shuffle(digger.getRooms())
 
     this.setPlayerPositionRandom();
-    this.placeExit()
-    this.placeSpecialRoom()
-    this.placeMonstersAndItemsInRooms()
+    this.fillDungeon()
+  }
+
+  fillDungeon() {
+    switch (this.level) {
+    case 1:
+      this.placeExit()
+      this.placeSpecialRoom()
+      this.placeMonstersAndItemsInRooms()
+      break;
+    case 2:
+      this.placeExit()
+      this.placeSpecialRoom()
+      this.placeMonstersAndItemsInRooms()
+      break;
+    case 3:
+      this.placeFinalExit()
+      this.placeBoy()
+      this.placeMonstersAndItemsInRooms()
+      break;
+    default: break;
+    }
   }
 
   nextRoom() {
@@ -238,12 +266,39 @@ export class Game {
     this.items.push(exit)
   }
 
+  placeFinalExit() {
+    const room = this.nextRoom()
+    const [x, y] = this.roomCenter(room)
+    const exit = new Item(x, y, this)
+    exit.name = 'exit'
+    exit.token = '~'
+    exit.color = 'blue'
+    exit.onPickup = (player, item) => {
+      if (this.hasBoy) {
+        this.onExit()
+      } else {
+        this.dialogue.play('missing_boy')
+        item.pickedUp = false
+      }
+    }
+    this.items.push(exit)
+  }
+
   placeSpecialRoom() {
     let specialRoom = this.specialRooms.pop()
     if (specialRoom) {
       let room = this.nextRoom()
       this.placeItem(room, specialRoom)
     }
+  }
+
+  placeBoy() {
+    let item = new Item(0, 0, this)
+    item.name = "The Missing Boy"
+    item.setToken('b', 'white')
+    item.story = 'boy'
+    let room = this.nextRoom()
+    this.placeItem(room, item)
   }
 
   placeMonstersAndItemsInRooms() {
@@ -348,9 +403,9 @@ export class Game {
     this.display.clear()
     this.drawMapFieldOfView()
     this.drawCompositeMap()
+    this.items.forEach((m) => m.draw(this.hasMap ? this.map : this.knownMap))
     this.player.draw()
     this.monsters.forEach((m) => m.draw(this.fov))
-    this.items.forEach((m) => m.draw(this.hasMap ? this.map : this.knownMap))
     if (this.dialogue)
       this.dialogue.draw()
     if (this.messages)

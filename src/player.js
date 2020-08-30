@@ -2,6 +2,7 @@ import { DIRS } from 'rot-js/lib/index';
 import { Util } from './util'
 import { Combat } from './combat'
 import { Actor } from './actor'
+import { Game } from './game'
 
 export class Player extends Actor {
   constructor(x, y, game) {
@@ -65,6 +66,15 @@ export class Player extends Actor {
     keyMap[35] = 5;
     keyMap[37] = 6;
     keyMap[36] = 7;
+
+    if (Game.debug) {
+      if (e.keyCode == 77) { // m
+        this.game.hasMap = true
+      }
+      if (e.keyCode == 78) { // n
+        this.game.onExit()
+      }
+    }
 
     let code = e.keyCode;
 

@@ -15,7 +15,7 @@ export class Item extends Actor {
   pickup(player) {
     this.pickedUp = true
     if (this.onPickup != null) {
-      this.onPickup(player)
+      this.onPickup(player, this)
     }
     if (this.story) {
       this.game.dialogue.play(this.story)

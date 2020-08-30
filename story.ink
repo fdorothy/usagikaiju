@@ -93,6 +93,14 @@ The stream connects here with a larger river. The boy sits down, breathless, as 
 
 -> DONE
 
+== missing_boy ==
+
+It looks like this leads out, but where is the boy?
+
+I don't see his footprints here. He must still be in the cave somewhere.
+
+-> DONE
+
 == boy ==
 
 The boy cowers from you.
@@ -102,6 +110,11 @@ The boy cowers from you.
 "Have no fear, I'm Dr. Lewis, you say. I'm here to help."
 
 The boy looks at you and smiles, taking your hand.
+
+"Please help, I'm very lost."
+
+:boy
+:br
 
 -> DONE
 
@@ -153,3 +166,18 @@ You find a map of the underground river. This could be useful.
 :map
 
 -> DONE
+
+== dinosaur_skeleton ==
+
+You come across a skeleton of a large, aquatic dinosaur. There is a native american tomahawk wedged in its skull.
+
+ + [Leave it alone]
+   It is wise to leave ancient artifacts alone.
+   :levelup, hp
+   -> DONE
+ + [Take it]
+   You take the stone tomahawk. It is ancient, but still razor sharp.
+   :levelup, weapon, 2
+   -> DONE
+
+There is a
