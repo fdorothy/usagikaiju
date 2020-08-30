@@ -87,6 +87,12 @@ export class Game {
   }
 
   removeDeadMonsters() {
+    this.monsters.forEach((m) => {
+      if (m.dead) {
+        this.player.addXP(m.xp)
+      }
+    })
+
     this.monsters = this.monsters.filter(m => !m.dead)
   }
 
@@ -138,6 +144,7 @@ export class Game {
     this.map = {};
     this.knownMap = {};
     this.items = []
+    this.monsters = []
     let digger = new Map.Digger(this.mapWidth, this.mapHeight);
     let freeCells = [];
 
@@ -147,26 +154,36 @@ export class Game {
       let key = Util.key(x, y);
       freeCells.push(key);
       this.map[key] = ".";
-      this.knownMap[key] = 1;
     }
 
     digger.create(digCallback.bind(this));
 
-    this.setPlayerPositionRandom(freeCells);
-    this.generateMonsters(freeCells);
-    this.placeExit(freeCells)
+    this.freeRooms = RNG.shuffle(digger.getRooms())
+
+    this.setPlayerPositionRandom();
+    this.placeExit()
+    this.placeMonstersAndItemsInRooms()
   }
 
-  setPlayerPositionRandom(freeCells) {
-    let index = Math.floor(RNG.getUniform() * freeCells.length);
-    let key = freeCells.splice(index, 1)[0];
-    let [x, y] = Util.parseKey(key)
-    this.player.x = x
-    this.player.y = y
+  nextRoom() {
+    return this.freeRooms.pop()
   }
 
-  placeExit(freeCells) {
-    const [x, y] = this.randomFreeCell(freeCells)
+  roomCenter(room) {
+    return [Math.trunc((room.getLeft() + room.getRight()) / 2.0),
+            Math.trunc((room.getTop() + room.getBottom()) / 2.0)]
+  }
+
+  setPlayerPositionRandom() {
+    const room = this.nextRoom()
+    const center = this.roomCenter(room)
+    this.player.x = center[0]
+    this.player.y = center[1]
+  }
+
+  placeExit() {
+    const room = this.nextRoom()
+    const [x, y] = this.roomCenter(room)
     const exit = new Item(x, y, this)
     exit.name = 'exit'
     exit.token = '~'
@@ -175,6 +192,45 @@ export class Game {
       this.onExit()
     }
     this.items.push(exit)
+  }
+
+  placeMonstersAndItemsInRooms() {
+    let room
+    const contents = {
+      "empty": 1,
+      "potion": 1,
+      "monster": 2
+    }
+    while (room = this.nextRoom()) {
+      const v = RNG.getWeightedValue(contents)
+      switch (v) {
+      case "empty": break;
+      case "potion":
+        this.placePotion(room)
+        break;
+      case "monster":
+        this.placeMonster(room)
+        break;
+      }
+    }
+  }
+
+  placePotion(room) {
+    const [x, y] = this.roomCenter(room)
+    const item = new Item(x, y, this)
+    item.name = 'potion'
+    item.token = 'p'
+    item.color = 'green'
+    item.onPickup = (player) => {
+      this.messages.push('You found a tonic. Health increases by 5')
+      this.player.heal(5)
+    }
+    this.items.push(item)
+  }
+
+  placeMonster(room) {
+    const [x, y] = this.roomCenter(room)
+    this.monsters.push(new Monster(x, y, this))
   }
 
   randomFreeCell(freeCells) {
@@ -225,7 +281,7 @@ export class Game {
     this.drawMapFieldOfView()
     this.drawCompositeMap()
     this.player.draw()
-    this.monsters.forEach((m) => m.draw(this.knownMap))
+    this.monsters.forEach((m) => m.draw(this.fov))
     this.items.forEach((m) => m.draw(this.knownMap))
     if (this.dialogue)
       this.dialogue.draw()
@@ -239,16 +295,6 @@ export class Game {
 
   worldToScreen([x, y]) {
     return [x + this.statusWidth + 1, y + this.messageHeight + 1]
-  }
-
-  generateMonsters(freeCells) {
-    this.monsters = []
-    for (let i=0; i<10; i++) {
-      let index = Math.floor(RNG.getUniform() * freeCells.length);
-      let key = freeCells.splice(index, 1)[0];
-      const [x, y] = Util.parseKey(key)
-      this.monsters.push(new Monster(x, y, this))
-    }
   }
 
   drawBox(rect, v) {

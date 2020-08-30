@@ -7,6 +7,7 @@ export class Monster extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
     this.setStats(3, 1, 1, 0, 0)
+    this.xp = 6
     this.setToken('m', 'red')
     this.name = 'Monster'
     this.chasing = false

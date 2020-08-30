@@ -45,6 +45,15 @@ export class Player extends Actor {
     }
   }
 
+  addXP(xp) {
+    this.xp += xp
+    if (this.xp > this.nextLevel) {
+      this.xp = this.xp - this.nextLevel
+      this.nextLevel = Math.trunc(this.nextLevel * 1.5)
+      this.hp = this.maxHp
+    }
+  }
+
   handleEvent = (e, resolve) => {
     let keyMap = {};
     keyMap[38] = 0;

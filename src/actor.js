@@ -28,6 +28,12 @@ export class Actor {
     }
   }
 
+  heal(amount) {
+    this.hp += amount
+    if (this.hp > this.maxHp)
+      this.hp = this.maxHp
+  }
+
   combat(other) {
     if (this.dead) return
     const dmg = Combat.attack(this, other)
