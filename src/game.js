@@ -28,7 +28,7 @@ export class Game {
     this.mainLoop()
   }
 
-  static debug = true
+  static debug = false
 
   restart() {
     this.player = new Player(0, 0, this)
