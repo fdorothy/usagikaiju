@@ -92,6 +92,32 @@ The boy gives you a hug as you finally make your way out, several miles from tow
 
 The stream connects with a larger river. The boy sits down, breathless, as you wave and shout at curious onlookers on a passing riverboat.
 
+:br
+
+The ship's captain calls out, "ahoy! Looks like we've come across a couple who have lost the path."
+
+:br
+
+The captain and crew take you on the riverboat. There is a mix of people here from all walks of life, all traveling downstream together to the town of Mobile, Alabama.
+
+"We ferry them up and down the river," the captain says, "we all board and depart when we must. I hope you have a pleasant stay with us on the boat, even if it is for just a short while."
+
+A band is playing, and people are dancing.
+
+:br
+
+They heal your wounds, for you are injured.
+
+They share their food with you, for you are hungry.
+
+They give you a bed to rest in, for you are tired.
+
+They keep you company on the long journey.
+
+:br
+
+The boy is safe at last.
+
 THE END
 
 :br
@@ -152,6 +178,8 @@ You've leveled up! How would you like to spend your experience?
 == ghost ==
 
 You see the ghost of an old confederate soldier ahead. His spectral face is full of hatred as he reaches for his sword.
+
+You cannot allow the boy to be taken by men like these.
 
 -> DONE
 
