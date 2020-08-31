@@ -39,7 +39,7 @@ You're looking for the boy. His friends said he crawled down the sinkhole earlie
 
 :br
 
-It looks scary down here. It looks like a network of passages with a stream flowing through them.
+It looks scary down here. There appears to be a network of passages with a stream flowing through them.
 
  + [Call up for help] ->
    The police officer tosses you a helmet.
@@ -60,17 +60,21 @@ It looks scary down here. It looks like a network of passages with a stream flow
 
 You come to another hole.
 
- + [Investigate]
-   There are small footprints near here. Perhaps they belong to the boy?
-   :br
-   -> level2
- + [Go down]
-   You descend down the hole, and slip on the steep slope.
-   -> DONE
+:br
+
+There are small footprints near here. Perhaps they belong to the boy?
+
+:br
+
+You descend down the hole, and slip on the steep slope.
+
+-> DONE
 
 == level3 ==
 
 The underground river continues on here. You see small footprints.
+
+:br
 
 You must be on the right track.
 
@@ -86,7 +90,9 @@ The boy gives you a hug as you finally make your way out, several miles from tow
 
 :br
 
-The stream connects here with a larger river. The boy sits down, breathless, as you wave and shout at curious onlookers on a passing riverboat.
+The stream connects with a larger river. The boy sits down, breathless, as you wave and shout at curious onlookers on a passing riverboat.
+
+THE END
 
 :br
 :restart
@@ -107,14 +113,16 @@ The boy cowers from you.
 
 :br
 
-"Have no fear, I'm Dr. Lewis, you say. I'm here to help."
+"Have no fear, I'm Dr. Lewis", you say. "I'm here to help."
 
 The boy looks at you and smiles, taking your hand.
 
-"Please help, I'm very lost."
+"Please help, I'm very lost," says the boy.
 
 :boy
 :br
+
+Dark shadows of the past lurk around every corner. Please, lead the boy to safety.
 
 -> DONE
 
@@ -126,7 +134,6 @@ You died.
 :restart
 
 -> DONE
-
 
 == levelup ==
 
@@ -181,3 +188,17 @@ You come across a skeleton of a large, aquatic dinosaur. There is a native ameri
    -> DONE
 
 There is a
+
+== bank_vault ==
+
+You stand in an old bank vault. The giant metal door that once protected the wealth of rich men rests hunched over on rusted hinges.
+
+There are stacks of money laying around.
+
+ + [Take some] ->
+   The paper money turns to dust. It could have done some good in its time, but now it is useless.
+   -> DONE
+ + [Leave it be] ->
+   You leave the money alone, knowing that you're on a bigger quest.
+   :levelup, hp
+   -> DONE

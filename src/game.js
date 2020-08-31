@@ -34,6 +34,7 @@ export class Game {
     this.player = new Player(0, 0, this)
     this.monsters = []
     this.items = []
+    this.firstConfederate = true
     this.createSpecialRooms()
     this.level = 1
     this.hasMap = false
@@ -42,15 +43,55 @@ export class Game {
 
   createSpecialRooms() {
     this.specialRooms = [
-      this.createSpecialRoom('Old Printing Press', 'printing_press'),
-      this.createSpecialRoom('Dinosaur Skeleton', 'dinosaur_skeleton')
+      this.createSpecialRoom('Old Printing Press', 'printing_press', 'N'),
+      this.createSpecialRoom('Dinosaur Skeleton', 'dinosaur_skeleton', 'S'),
+      this.createSpecialRoom('Abandoned Bank Vault', 'bank_vault', '$')
     ]
+    this.specialRooms = RNG.shuffle(this.specialRooms)
   }
 
-  createSpecialRoom(name, story) {
+  createRat(x, y) {
+    const rat = new Monster(x, y, this)
+    rat.setStats(2, 1, 0, 2, 0)
+    rat.xp = 2
+    rat.name = 'Rat'
+    rat.setToken('r', Util.colors.blood)
+    return rat
+  }
+
+  createConfederate(x, y) {
+    const m = new Monster(x, y, this)
+    m.setStats(4, 1, 1, 2, 0)
+    m.xp = 6
+    m.name = 'Confederate Ghost'
+    m.setToken('c', Util.colors.blood)
+    return m
+  }
+
+  createDinosaur(x, y) {
+    const m = new Monster(x, y, this)
+    m.setStats(4, 2, 2, 3, 1)
+    m.xp = 15
+    m.name = 'Dinosaur'
+    m.setToken('d', Util.colors.blood)
+    return m
+  }
+
+  createActorInRoom(type, room) {
+    switch (type) {
+    case 'empty': return null
+    case 'potion': return this.placePotion(room)
+    case 'rat': return this.placeMonster(room, this.createRat(0, 0))
+    case 'confederate': return this.placeMonster(room, this.createConfederate(0, 0))
+    case 'dinosaur': return this.placeMonster(room, this.createDinosaur(0, 0))
+    default: return null
+    }
+  }
+
+  createSpecialRoom(name, story, token) {
     let item = new Item(0, 0, this)
     item.name = name
-    item.setToken('?', Util.colors.important)
+    item.setToken(token, Util.colors.important)
     item.story = story
     return item
   }
@@ -115,10 +156,8 @@ export class Game {
   async mainLoop() {
     while (1) {
       if (this.dialogue.showing) {
-        console.log('dialogue turn')
         await this.dialogue.act()
       } else {
-        console.log('start of turn')
         this.draw()
         const result = await this.player.act()
         if (result) {
@@ -221,17 +260,40 @@ export class Game {
     case 1:
       this.placeExit()
       this.placeSpecialRoom()
-      this.placeMonstersAndItemsInRooms()
+      this.placeMonstersAndItemsInRooms(
+        {
+          "empty": 2,
+          "potion": 1,
+          "rat": 3,
+          "confederate": 1,
+        }
+      )
       break;
     case 2:
       this.placeExit()
       this.placeSpecialRoom()
-      this.placeMonstersAndItemsInRooms()
+      this.placeMonstersAndItemsInRooms(
+        {
+          "empty": 2,
+          "potion": 1,
+          "rat": 3,
+          "confederate": 5,
+          "dinosaur": 1
+        }
+      )
       break;
     case 3:
       this.placeFinalExit()
       this.placeBoy()
-      this.placeMonstersAndItemsInRooms()
+      this.placeMonstersAndItemsInRooms(
+        {
+          "empty": 1,
+          "potion": 1,
+          "rat": 2,
+          "confederate": 5,
+          "dinosaur": 3
+        }
+      )
       break;
     default: break;
     }
@@ -303,24 +365,11 @@ export class Game {
     this.placeItem(room, item)
   }
 
-  placeMonstersAndItemsInRooms() {
+  placeMonstersAndItemsInRooms(contents) {
     let room
-    const contents = {
-      "empty": 1,
-      "potion": 1,
-      "monster": 2
-    }
     while (room = this.nextRoom()) {
       const v = RNG.getWeightedValue(contents)
-      switch (v) {
-      case "empty": break;
-      case "potion":
-        this.placePotion(room)
-        break;
-      case "monster":
-        this.placeMonster(room)
-        break;
-      }
+      this.createActorInRoom(v, room)
     }
   }
 
@@ -344,9 +393,11 @@ export class Game {
     this.items.push(item)
   }
 
-  placeMonster(room) {
+  placeMonster(room, monster) {
     const [x, y] = this.roomCenter(room)
-    this.monsters.push(new Monster(x, y, this))
+    monster.x = x
+    monster.y = y
+    this.monsters.push(monster)
   }
 
   randomFreeCell(freeCells) {

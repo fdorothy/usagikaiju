@@ -26,6 +26,11 @@ export class Actor {
       console.log('drawing ' + this.name)
       const [x, y] = this.game.worldToScreen([this.x, this.y])
       this.game.display.draw(x, y, this.token, this.color, this.background);
+
+      if (this.game.firstConfederate && this.name == 'Confederate Ghost') {
+        this.game.dialogue.play('ghost')
+        this.game.firstConfederate = false
+      }
     }
   }
 
