@@ -23,7 +23,6 @@ export class Actor {
   draw (fov) {
     const key = Util.key(this.x, this.y)
     if (fov == undefined || key in fov) {
-      console.log('drawing ' + this.name)
       const [x, y] = this.game.worldToScreen([this.x, this.y])
       this.game.display.draw(x, y, this.token, this.color, this.background);
 
@@ -32,6 +31,11 @@ export class Actor {
         this.game.firstConfederate = false
       }
     }
+  }
+
+  isVisible (fov) {
+    const key = Util.key(this.x, this.y)
+    return fov == undefined || key in fov
   }
 
   heal(amount) {

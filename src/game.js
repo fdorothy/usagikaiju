@@ -34,6 +34,7 @@ export class Game {
     this.player = new Player(0, 0, this)
     this.monsters = []
     this.items = []
+    this.visible = []
     this.firstConfederate = true
     this.createSpecialRooms()
     this.level = 1
@@ -459,6 +460,11 @@ export class Game {
     this.items.forEach((m) => m.draw(this.hasMap ? this.map : this.knownMap))
     this.player.draw()
     this.monsters.forEach((m) => m.draw(this.fov))
+
+    // figure out who is visible
+    this.status.monsters = this.monsters.filter((m) => m.isVisible(this.fov))
+    this.status.items = this.items.filter((m) => m.isVisible(this.fov))
+
     if (this.dialogue)
       this.dialogue.draw()
     if (this.messages)
