@@ -1,3 +1,9 @@
+VAR points = 0
+VAR size = 1
+VAR time = 10
+VAR size_cost = 10
+VAR time_cost = 10
+
 -> title
 
 == title ==
@@ -26,6 +32,38 @@ The map only extends to the bounds of the window.
 :br
 
 -> title
+
+== upgrade ==
+
+Time's up. Take a rest and upgrade your powers!
+
+You have {points} points to spend. Upgrade?
+
+ + [Upgrade Size ({size_cost} pts.)] ->
+   :upgrade_size
+   -> upgrade
+ + [Upgrade Time ({time_cost} pts.)] -> 
+   :upgrade_time
+   -> upgrade
+ + [Continue] ->
+   :continue
+   -> DONE
+
+== valid_selection ==
+
+OK, upgraded.
+
+:br
+
+-> upgrade
+
+== invalid_selection ==
+
+Sorry, that costs too much. Continue the game, eat more to upgrade.
+
+:br
+
+-> upgrade
 
 == level1 ==
 

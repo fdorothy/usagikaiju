@@ -26,7 +26,7 @@ export class Game {
     this.dialogue = new Dialogue(inkStoryJson, this);
     this.messages = new Messages(this, this.statusWidth+2, this.messageHeight-1);
     this.status = new Status(this, this.statusWidth)
-    this.countdown = 999
+    this.countdown = 10
     this.lastTime = this.ms()
     this.fps = 30
     this.deltaTime = 0.0
@@ -42,9 +42,7 @@ export class Game {
   static debug = false
 
   restart() {
-    this.lastTime = this.ms()
     this.createItemTypes()
-    this.startTime = this.timestamp()
     this.player = new Player(0, 0, this)
     this.monsters = []
     this.items = []
@@ -53,11 +51,6 @@ export class Game {
     this.hasMap = false
     this.startLevel()
     this.dialogue.play("title")
-  }
-
-  startLevel() {
-    this.countdown = this.player.maxTime
-    console.log('start level ' + this.countdown)
   }
 
   timestamp() {
@@ -72,11 +65,11 @@ export class Game {
 
   createItemTypes() {
     this.itemTypes = {
-      'pellet': {token: '・', size: 1, xp: 3},
-      'peach': {token: 'の', size: 2, xp: 5},
+      'pellet': {token: '・', size: 1, xp: 1},
+      'peach': {token: 'の', size: 2, xp: 2},
       'rabbit poop': {token: '゛', size: 1, xp: 1},
-      'sake': {token: 'S', size: 3, xp: 10},
-      'toddler': {token: 'ピ', size: 9, xp: 100}
+      'sake': {token: 'S', size: 3, xp: 2},
+      'toddler': {token: 'ピ', size: 3, xp: 5}
     }
   }
 
@@ -90,7 +83,7 @@ export class Game {
     item.onPickup = (player) => {
       if (this.player.size >= item.size) {
         this.messages.push('You ate a ' + item.name + ', yum')
-        this.player.xp += item.xp
+        this.player.points += item.xp
       }
     }
     this.items.push(item)
@@ -107,10 +100,14 @@ export class Game {
   }
 
   startLevel() {
+    this.countdown = this.player.maxTime
+    this.lastTime = this.ms()
+    this.startTime = this.timestamp()
     this.generateMap();
-    this.dialogue.play(`level${this.level}`, () => {
-      this.messages.push("Use the arrow keys to move")
-    })
+    //this.dialogue.play(`level${this.level}`, () => {
+    this.messages.push("Use the arrow keys to move")
+    this.messages.push("Eat what you can")
+    //})
   }
 
   handleEvent = (e) => {
@@ -173,6 +170,21 @@ export class Game {
     case ':restart':
       this.restart()
       break;
+    case ':continue':
+      this.startLevel()
+      break;
+    case ':upgrade_size':
+      if (this.player.upgrade_size())
+        this.dialogue.play("valid_selection")
+      else
+        this.dialogue.play("invalid_selection")
+      break;
+    case ':upgrade_time':
+      if (this.player.upgrade_time())
+        this.dialogue.play("valid_selection")
+      else
+        this.dialogue.play("invalid_selection")
+      break;
     default: break;
     }
   }
@@ -184,6 +196,8 @@ export class Game {
   async mainLoop() {
     while (1) {
       if (this.dialogue.showing) {
+        this.display.clear()
+        this.pushVariables()
         await this.dialogue.act()
       } else {
         this.draw()
@@ -199,10 +213,10 @@ export class Game {
         const sleepTime = 1000 / this.fps - (ts - this.lastTime)
         if (sleepTime > 0) {
           await this.sleep(sleepTime)
-          this.deltaTime = sleepTime / 1000.0
+          this.deltaTime = 1 / this.fps
         } else {
           await this.sleep(10)
-          this.deltaTime = 10 / 1000.0
+          this.deltaTime = 1 / this.fps
         }
         this.lastTime = ts
       }
@@ -222,17 +236,23 @@ export class Game {
   checkItems() {
     const item = this.getItem(this.player.x, this.player.y)
     if (item) {
-      item.pickup(this.player)
-      this.items = this.items.filter(m => !m.pickedUp)
+      if (this.player.size >= item.size) {
+        item.pickup(this.player)
+        this.items = this.items.filter(m => !m.pickedUp)
+      }
     }
   }
 
   checkGameOver() {
     if (this.player.dead) {
-      this.dialogue.play("gameover")
+      this.dialogue.play("upgrade")
     }
 
     this.countdown -= this.deltaTime
+    if (this.countdown <= 0) {
+      this.dialogue.play("upgrade")
+      this.countdown = 0.0
+    }
   }
 
   canMonsterMove(x, y) {
@@ -298,7 +318,6 @@ export class Game {
     for (var key in this.itemTypes) {
       contents[key] = 1
     }
-    contents[''] = 2
     this.placeMonstersAndItemsInRooms(contents)
   }
 
@@ -321,14 +340,16 @@ export class Game {
   placeMonstersAndItemsInRooms(contents) {
     let room
     while (room = this.nextRoom()) {
-      for (let x=room.getLeft(); x<room.getRight(); x++) {
-        for (let y=room.getTop(); y<room.getBottom(); y++) {
-          const v = RNG.getWeightedValue(contents)
-          console.log(v)
-          if (v != '') {
-            this.placeItem(v, x, y)
-          }
-        }
+      const v = RNG.getWeightedValue(contents)
+      const center = this.roomCenter(room)
+      this.placeAround(v, center, 2)
+    }
+  }
+
+  placeAround(itemName, xy, size = 1) {
+    for (let x=xy[0]-size; x<xy[0]+size; x++) {
+      for (let y=xy[1]-size; y<xy[1]+size; y++) {
+        this.placeItem(itemName, x, y)
       }
     }
   }
@@ -413,5 +434,13 @@ export class Game {
 
   worldToScreen([x, y]) {
     return [x + this.statusWidth + 1, y + this.messageHeight + 1]
+  }
+
+  pushVariables() {
+    this.dialogue.story.variablesState["points"] = this.player.points
+    this.dialogue.story.variablesState["size"] = this.player.size
+    this.dialogue.story.variablesState["time"] = this.player.maxTime
+    this.dialogue.story.variablesState["size_cost"] = this.player.upgrade_size_pts
+    this.dialogue.story.variablesState["time_cost"] = this.player.upgrade_time_pts
   }
 }

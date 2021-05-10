@@ -8,12 +8,33 @@ export class Player extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
     this.setToken('ベ', '#ffffff')
-    this.xp = 0
-    this.nextLevel = 10
+    this.points = 0
+    this.upgrade_size_pts = 10
+    this.upgrade_time_pts = 10
     this.size = 1
     this.promise = null
     this.maxTime = 10
     this.name = 'player'
+  }
+
+  upgrade_size() {
+    if (this.points >= this.upgrade_size_pts) {
+      this.points -= this.upgrade_size_pts
+      this.size++
+      this.upgrade_size_pts *= 2
+      return true
+    }
+    return false
+  }
+
+  upgrade_time() {
+    if (this.points >= this.upgrade_time_pts) {
+      this.points -= this.upgrade_time_pts
+      this.maxTime += 10
+      this.upgrade_time_pts *= 2
+      return true
+    }
+    return false
   }
 
   act() {

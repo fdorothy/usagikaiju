@@ -13,6 +13,7 @@ export class Dialogue {
   }
 
   play(knot, cb) {
+    this.game.pushVariables()
     this.story.ChoosePathString(knot);
     this.showing = true;
     this.callback = cb
