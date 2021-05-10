@@ -12,10 +12,7 @@ Usagi Kaiju
 
 by @redmountainman1 for Text Only Jam 2 (8-bits-to-infinity).
 
- + [New Game]
-   :newgame
-   -> DONE
- + [Help] -> help
+ + [New Game] -> help
 
 == help ==
 
@@ -27,11 +24,11 @@ Use the arrow keys to move.
 
 You play by moving around the map and eating things to get bigger. The bigger you are, the more things you can eat. Watch out for hostile things! Look for secret stashes!
 
-The map only extends to the bounds of the window.
-
 :br
 
--> title
+:newgame
+
+-> DONE
 
 == upgrade ==
 
