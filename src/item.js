@@ -10,6 +10,7 @@ export class Item extends Actor {
     this.onPickup = null
     this.pickedUp = false
     this.story = null
+    this.xp = 1
   }
 
   pickup(player) {

@@ -1,3 +1,4 @@
+import { DIRS } from 'rot-js/lib/index';
 import { Map, Display, Engine, KEYS, RNG, FOV, Color } from 'rot-js/lib/index';
 import { Player } from './player'
 import { Util } from './util'
@@ -5,24 +6,34 @@ import { Dialogue } from './story'
 let inkStoryJson = require('../story.ink.json');
 import { Messages } from './messages'
 import { Status } from './status'
-import { Monster } from './monster'
 import { Item } from './item'
+import { Draw } from './draw'
 
 export class Game {
   constructor() {
     this.engine = null;
     this.player = null;
-    this.width = 100
+    this.width = 120
     this.height = 40
+    this.inputDiff = [0, 0]
     this.display = new Display({width: this.width, height: this.height, fg: Util.colors.bright, bg: 'black'});
     document.body.appendChild(this.display.getContainer());
-    this.statusWidth = 15
+    this.drawer = new Draw(this.display)
+    this.statusWidth = 17
     this.messageHeight = 4
     this.mapWidth = this.width - this.statusWidth - 1
     this.mapHeight = this.height - this.messageHeight - 1
     this.dialogue = new Dialogue(inkStoryJson, this);
     this.messages = new Messages(this, this.statusWidth+2, this.messageHeight-1);
     this.status = new Status(this, this.statusWidth)
+    this.countdown = 999
+    this.lastTime = this.ms()
+    this.fps = 30
+    this.deltaTime = 0.0
+
+    // handle keyboard events here
+    const handleEvent = this.handleEvent
+    window.addEventListener("keydown", (e) => handleEvent(e))
 
     this.restart()
     this.mainLoop()
@@ -31,70 +42,58 @@ export class Game {
   static debug = false
 
   restart() {
+    this.lastTime = this.ms()
+    this.createItemTypes()
+    this.startTime = this.timestamp()
     this.player = new Player(0, 0, this)
     this.monsters = []
     this.items = []
     this.visible = []
-    this.firstConfederate = true
-    this.createSpecialRooms()
     this.level = 1
     this.hasMap = false
+    this.startLevel()
     this.dialogue.play("title")
   }
 
-  createSpecialRooms() {
-    this.specialRooms = [
-      this.createSpecialRoom('Old Printing Press', 'printing_press', 'N'),
-      this.createSpecialRoom('Dinosaur Skeleton', 'dinosaur_skeleton', 'S'),
-      this.createSpecialRoom('Abandoned Bank Vault', 'bank_vault', '$')
-    ]
-    this.specialRooms = RNG.shuffle(this.specialRooms)
+  startLevel() {
+    this.countdown = this.player.maxTime
+    console.log('start level ' + this.countdown)
   }
 
-  createRat(x, y) {
-    const rat = new Monster(x, y, this)
-    rat.setStats(2, 1, 0, 2, 0)
-    rat.xp = 2
-    rat.name = 'Rat'
-    rat.setToken('r', Util.colors.blood)
-    return rat
+  timestamp() {
+    return new Date().getTime() / 1000;
   }
 
-  createConfederate(x, y) {
-    const m = new Monster(x, y, this)
-    m.setStats(4, 1, 1, 2, 0)
-    m.xp = 6
-    m.name = 'Confederate Ghost'
-    m.setToken('c', Util.colors.blood)
-    return m
+  ms() {
+    const d = new Date();
+    const seconds = d.getTime();
+    return seconds;
   }
 
-  createDinosaur(x, y) {
-    const m = new Monster(x, y, this)
-    m.setStats(4, 2, 2, 3, 1)
-    m.xp = 15
-    m.name = 'Dinosaur'
-    m.setToken('d', Util.colors.blood)
-    return m
-  }
-
-  createActorInRoom(type, room) {
-    switch (type) {
-    case 'empty': return null
-    case 'potion': return this.placePotion(room)
-    case 'rat': return this.placeMonster(room, this.createRat(0, 0))
-    case 'confederate': return this.placeMonster(room, this.createConfederate(0, 0))
-    case 'dinosaur': return this.placeMonster(room, this.createDinosaur(0, 0))
-    default: return null
+  createItemTypes() {
+    this.itemTypes = {
+      'pellet': {token: '・', size: 1, xp: 3},
+      'peach': {token: 'の', size: 2, xp: 5},
+      'rabbit poop': {token: '゛', size: 1, xp: 1},
+      'sake': {token: 'S', size: 3, xp: 10},
+      'toddler': {token: 'ピ', size: 9, xp: 100}
     }
   }
 
-  createSpecialRoom(name, story, token) {
-    let item = new Item(0, 0, this)
-    item.name = name
-    item.setToken(token, Util.colors.important)
-    item.story = story
-    return item
+  placeItem(itemName, x, y) {
+    const itemType = this.itemTypes[itemName]
+    const item = new Item(x, y, this)
+    item.setToken(itemType.token, Util.colors.blood)
+    item.name = itemName
+    item.size = itemType.size
+    item.xp = itemType.xp
+    item.onPickup = (player) => {
+      if (this.player.size >= item.size) {
+        this.messages.push('You ate a ' + item.name + ', yum')
+        this.player.xp += item.xp
+      }
+    }
+    this.items.push(item)
   }
 
   onExit() {
@@ -114,44 +113,72 @@ export class Game {
     })
   }
 
+  handleEvent = (e) => {
+    let keyMap = {};
+    keyMap[38] = 0;
+    keyMap[33] = 1;
+    keyMap[39] = 2;
+    keyMap[34] = 3;
+    keyMap[40] = 4;
+    keyMap[35] = 5;
+    keyMap[37] = 6;
+    keyMap[36] = 7;
+
+    if (Game.debug) {
+      if (e.keyCode == 77) { // m
+        this.game.hasMap = true
+      }
+      if (e.keyCode == 78) { // n
+        this.game.onExit()
+      }
+    }
+
+    let code = e.keyCode;
+
+    if (!(code in keyMap)) {
+      return;
+    }
+    e.preventDefault()
+    let diff = DIRS[8][keyMap[code]];
+    this.inputDiff = diff
+  }
+
+  checkPlayerMovement() {
+    let newX = this.player.x + this.inputDiff[0];
+    let newY = this.player.y + this.inputDiff[1];
+    this.inputDiff = [0,0]
+
+    let newKey = newX + "," + newY;
+
+    let key = Util.key(this.player.x, this.player.y)
+    if (this.canPlayerMove(newX, newY)) {
+      this.player.x = newX;
+      this.player.y = newY;
+    } else {
+      const m = this.getMonster(newX, newY);
+      if (m) {
+        this.combat(m)
+      } else {
+        //this.messages.push(`The stone wall is cold.`)
+      }
+    }
+  }
+
   handleStoryEvent(event) {
     const name = event[0].trim()
     switch (name) {
     case ':newgame':
-      this.newGame()
+      this.newGame();
       break;
     case ':restart':
       this.restart()
       break;
-    case ':levelup':
-      switch (event[1].trim()) {
-      case 'hp':
-        this.player.hp += 5
-        this.player.maxHp += 5
-        this.messages.push("Hitpoints increased by 5")
-        break;
-      case 'attack':
-        this.player.attack += 1
-        this.messages.push("Attack increased by 1")
-        break;
-      case 'defense':
-        this.player.defense += 1
-        this.messages.push("Defense increased by 1")
-        break;
-      case 'weapon':
-        this.player.weapon += parseInt(event[2].trim())
-        this.messages.push("You pickup a new weapon.")
-        break;
-      default: break
-      }
-      break;
-    case ':map':
-      this.hasMap = true
-      break;
-    case ':boy':
-      this.hasBoy = true
     default: break;
     }
+  }
+
+  sleep(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
   }
 
   async mainLoop() {
@@ -160,16 +187,24 @@ export class Game {
         await this.dialogue.act()
       } else {
         this.draw()
-        const result = await this.player.act()
-        if (result) {
-          this.checkItems()
-          this.removeDeadMonsters()
-          for (let i=0; i<this.monsters.length; i++) {
-            await this.monsters[i].act()
-          }
-          this.checkGameOver()
+        this.checkPlayerMovement()
+        this.checkItems()
+        this.removeDeadMonsters()
+        for (let i=0; i<this.monsters.length; i++) {
+          await this.monsters[i].act()
         }
+        this.checkGameOver()
         this.draw()
+        const ts = this.ms()
+        const sleepTime = 1000 / this.fps - (ts - this.lastTime)
+        if (sleepTime > 0) {
+          await this.sleep(sleepTime)
+          this.deltaTime = sleepTime / 1000.0
+        } else {
+          await this.sleep(10)
+          this.deltaTime = 10 / 1000.0
+        }
+        this.lastTime = ts
       }
     }
   }
@@ -196,6 +231,8 @@ export class Game {
     if (this.player.dead) {
       this.dialogue.play("gameover")
     }
+
+    this.countdown -= this.deltaTime
   }
 
   canMonsterMove(x, y) {
@@ -235,7 +272,7 @@ export class Game {
     this.knownMap = {};
     this.items = []
     this.monsters = []
-    let digger = new Map.Digger(this.mapWidth, this.mapHeight);
+    let digger = new Map.Digger(this.mapWidth, this.mapHeight, {roomWidth: [10,15], roomHeight: [10,15], dugPercentage: 0.6});
     let freeCells = [];
 
     let digCallback = function(x, y, value) {
@@ -243,7 +280,7 @@ export class Game {
       if (value) {
         this.map[key] = "#";
       } else {
-        this.map[key] = ".";
+        this.map[key] = " ";
         freeCells.push(key);
       }
     }
@@ -257,47 +294,12 @@ export class Game {
   }
 
   fillDungeon() {
-    switch (this.level) {
-    case 1:
-      this.placeExit()
-      this.placeSpecialRoom()
-      this.placeMonstersAndItemsInRooms(
-        {
-          "empty": 2,
-          "potion": 1,
-          "rat": 3,
-          "confederate": 1,
-        }
-      )
-      break;
-    case 2:
-      this.placeExit()
-      this.placeSpecialRoom()
-      this.placeMonstersAndItemsInRooms(
-        {
-          "empty": 2,
-          "potion": 1,
-          "rat": 3,
-          "confederate": 5,
-          "dinosaur": 1
-        }
-      )
-      break;
-    case 3:
-      this.placeFinalExit()
-      this.placeBoy()
-      this.placeMonstersAndItemsInRooms(
-        {
-          "empty": 1,
-          "potion": 1,
-          "rat": 2,
-          "confederate": 5,
-          "dinosaur": 3
-        }
-      )
-      break;
-    default: break;
+    let contents = {}
+    for (var key in this.itemTypes) {
+      contents[key] = 1
     }
+    contents[''] = 2
+    this.placeMonstersAndItemsInRooms(contents)
   }
 
   nextRoom() {
@@ -316,89 +318,19 @@ export class Game {
     this.player.y = center[1]
   }
 
-  placeExit() {
-    const room = this.nextRoom()
-    const [x, y] = this.roomCenter(room)
-    const exit = new Item(x, y, this)
-    exit.name = 'exit'
-    exit.token = '~'
-    exit.color = Util.colors.bright
-    exit.background = Util.colors.water
-    exit.onPickup = (player) => {
-      this.onExit()
-    }
-    this.items.push(exit)
-  }
-
-  placeFinalExit() {
-    const room = this.nextRoom()
-    const [x, y] = this.roomCenter(room)
-    const exit = new Item(x, y, this)
-    exit.name = 'exit'
-    exit.token = '~'
-    exit.color = Util.colors.bright
-    exit.background = Util.colors.water
-    exit.onPickup = (player, item) => {
-      if (this.hasBoy) {
-        this.onExit()
-      } else {
-        this.dialogue.play('missing_boy')
-        item.pickedUp = false
-      }
-    }
-    this.items.push(exit)
-  }
-
-  placeSpecialRoom() {
-    let specialRoom = this.specialRooms.pop()
-    if (specialRoom) {
-      let room = this.nextRoom()
-      this.placeItem(room, specialRoom)
-    }
-  }
-
-  placeBoy() {
-    let item = new Item(0, 0, this)
-    item.name = "The Missing Boy"
-    item.setToken('b', 'white')
-    item.story = 'boy'
-    let room = this.nextRoom()
-    this.placeItem(room, item)
-  }
-
   placeMonstersAndItemsInRooms(contents) {
     let room
     while (room = this.nextRoom()) {
-      const v = RNG.getWeightedValue(contents)
-      this.createActorInRoom(v, room)
+      for (let x=room.getLeft(); x<room.getRight(); x++) {
+        for (let y=room.getTop(); y<room.getBottom(); y++) {
+          const v = RNG.getWeightedValue(contents)
+          console.log(v)
+          if (v != '') {
+            this.placeItem(v, x, y)
+          }
+        }
+      }
     }
-  }
-
-  placeItem(room, item) {
-    const [x, y] = this.roomCenter(room)
-    item.x = x
-    item.y = y
-    this.items.push(item)
-  }
-
-  placePotion(room) {
-    const [x, y] = this.roomCenter(room)
-    const item = new Item(x, y, this)
-    item.name = 'potion'
-    item.token = 'p'
-    item.color = Util.colors.important
-    item.onPickup = (player) => {
-      this.messages.push('You found a tonic. Health increases by 5')
-      this.player.heal(5)
-    }
-    this.items.push(item)
-  }
-
-  placeMonster(room, monster) {
-    const [x, y] = this.roomCenter(room)
-    monster.x = x
-    monster.y = y
-    this.monsters.push(monster)
   }
 
   randomFreeCell(freeCells) {
@@ -420,7 +352,7 @@ export class Game {
     const game = this
     let fov = new FOV.PreciseShadowcasting((x, y) => {
       var key = x+","+y;
-      if (key in game.map) { return (game.map[key] === '.'); }
+      if (key in game.map) { return (game.map[key] === ' '); }
       return false;
     });
 
@@ -463,7 +395,11 @@ export class Game {
 
     // figure out who is visible
     this.status.monsters = this.monsters.filter((m) => m.isVisible(this.fov))
-    this.status.items = this.items.filter((m) => m.isVisible(this.fov))
+
+    const items = this.items.filter((m) => m.isVisible(this.fov))
+    const uniqueItemsMap = items.reduce((map, obj) => (map[obj.name] = obj, map), {})
+    const keys = Object.keys(uniqueItemsMap).sort()
+    this.status.items = keys.map(key => uniqueItemsMap[key])
 
     if (this.dialogue)
       this.dialogue.draw()
@@ -471,54 +407,11 @@ export class Game {
       this.messages.draw()
     if (this.status)
       this.status.draw()
-    this.drawLine(this.statusWidth, 0, this.statusWidth, this.height, '|', '|')
-    this.drawLine(this.statusWidth, this.messageHeight, this.width, this.messageHeight, '-', '+')
+    this.drawer.drawLine(this.statusWidth, 0, this.statusWidth, this.height, '|', '|')
+    this.drawer.drawLine(this.statusWidth, this.messageHeight, this.width, this.messageHeight, '-', '+')
   }
 
   worldToScreen([x, y]) {
     return [x + this.statusWidth + 1, y + this.messageHeight + 1]
-  }
-
-  drawBox(rect, v) {
-    for (let x=rect[0]; x<=rect[2]; x++) {
-      for (let y=rect[1]; y<=rect[3]; y++) {
-        this.display.draw(x, y, v)
-      }
-    }
-  }
-
-  drawBorder(rect, vx, vy, vc) {
-    let x = 0, y = 0;
-    for (x=rect[0]; x<=rect[2]; x++) {
-      this.display.draw(x, rect[1], vx)
-    }
-    for (x=rect[0]; x<=rect[2]; x++) {
-      this.display.draw(x, rect[3], vx)
-    }
-    for (y=rect[1]; y<=rect[3]; y++) {
-      this.display.draw(rect[0], y, vy)
-    }
-    for (y=rect[1]; y<=rect[3]; y++) {
-      this.display.draw(rect[2], y, vy)
-    }
-    this.display.draw(rect[0], rect[1], vc)
-    this.display.draw(rect[0], rect[3], vc)
-    this.display.draw(rect[2], rect[1], vc)
-    this.display.draw(rect[2], rect[3], vc)
-  }
-
-  drawLine(x0, y0, x1, y1, v, vc) {
-    let x = x0, y = y0;
-    let dx = x0 > x1 ? -1 : 1;
-    let dy = y0 > y1 ? -1 : 1;
-    while (x != x1 || y != y1) {
-      if (x != x1)
-        x += dx;
-      if (y != y1)
-        y += dy;
-      this.display.draw(x, y, v)
-    }
-    this.display.draw(x0, y0, vc)
-    this.display.draw(x1, y1, vc)
   }
 }

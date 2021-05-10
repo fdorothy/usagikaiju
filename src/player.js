@@ -7,17 +7,12 @@ import { Game } from './game'
 export class Player extends Actor {
   constructor(x, y, game) {
     super(x, y, game)
-    this.setToken('@', '#ff0')
+    this.setToken('ベ', '#ffffff')
     this.xp = 0
-    this.nextLevel = 20
-    this.hp = 10
-    this.maxHp = 10
-    this.attack = 1
-    this.defense = 1
-    this.body = 1
-    this.armor = 0
-    this.weapon = 2
+    this.nextLevel = 10
+    this.size = 1
     this.promise = null
+    this.maxTime = 10
     this.name = 'player'
   }
 
@@ -33,17 +28,6 @@ export class Player extends Actor {
         handleEvent(e, resolve)
       }, {once: true})
     })
-  }
-
-  onCombat(damage, other) {
-    const name = this.colored('You')
-    const otherName = other.coloredName()
-    if (damage) {
-      let dmg = `%c{red}${damage}%c{}`
-      this.game.messages.push(`${name} hit ${otherName} for ${dmg} damage.`)
-    } else {
-      this.game.messages.push(`${name} missed ${otherName}.`)
-    }
   }
 
   addXP(xp) {

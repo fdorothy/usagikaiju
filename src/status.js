@@ -10,14 +10,21 @@ export class Status {
     this.rect = [0, 0, width, this.game.height]
     this.width = this.rect[2] - this.rect[0]
     this.height = this.rect[3] - this.rect[1]
-    this.cursorY = 0
+    this.cursorY = 1
+    this.cursorX = 1
+    this.spinnerToken = '-'
+    this.animFrame = 0
+    this.interval = 0.1
+    this.timeTokenTimer = this.interval
+    this.spinnerFrames = ['-', '\\', '|', '/']
+    this.rainbow = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee']
   }
 
   draw() {
-    this.cursorY = 0
-    this.text(`level ${this.game.level}/3`)
-    this.cursorY += 1
+    this.cursorY = 1
     this.drawHero()
+    this.cursorY += 2
+    this.text('Visible:')
     this.cursorY += 1
     this.monsters.forEach((m) => {
       this.drawMonster(m)
@@ -27,16 +34,41 @@ export class Status {
       this.drawItem(m)
       this.cursorY += 1
     })
+    this.update()
   }
 
   drawHero() {
     const p = this.game.player
-    this.text('Dr. Lewis')
-    this.text(this.bar("XP", p.xp, p.nextLevel, Util.colors.water))
-    this.text(this.bar("HP", p.hp, p.maxHp, Util.colors.blood))
-    this.text(`Attack: ${p.attack} ${this.modifier(p.weapon)}`)
-    this.text(`Defense: ${p.defense} ${this.modifier(p.armor)}`)
-    this.text(`Body: ${p.body}`)
+    this.text('Usagi Kaiju ベ')
+    this.text('Vastness: ' + p.size)
+    this.text('Satiety: ' + p.xp + '/' + p.nextLevel)
+    this.text('Time: ' + Math.floor(this.game.countdown) + ' ' + this.getSpriteAnim(this.spinnerFrames))
+    this.cursorY += 1
+    this.text('Digestive Tract:')
+    this.drawRainbow(this.game.statusWidth - 2)
+  }
+
+  update() {
+    if (this.timeTokenTimer <= 0.0) {
+      this.animFrame += 1
+      this.timeTokenTimer += this.interval
+    }
+    this.timeTokenTimer -= this.game.deltaTime
+  }
+
+  getSpriteAnim(frames, offset = 0, scalar = 1) {
+    return frames[(offset + Math.floor(this.animFrame * scalar)) % frames.length]
+  }
+
+  drawRainbow(width) {
+    for (let x=0; x<width; x++) {
+      const c = '='
+      if (x == 0)
+        c = this.getSpriteAnim(['@', 'o'], 0, 0.2)
+      if (x == width-1)
+        c = this.getSpriteAnim(['<', '-'], 0, 0.2)
+      this.game.display.draw(this.cursorX+x, this.cursorY, c, this.getSpriteAnim(this.rainbow, x, 0.2))
+    }
   }
 
   drawItem(item) {
@@ -56,7 +88,7 @@ export class Status {
   }
 
   text(text) {
-    this.game.display.drawText(0, this.cursorY, text, this.width)
+    this.game.display.drawText(this.cursorX, this.cursorY, text, this.width)
     this.cursorY += 1
   }
 
