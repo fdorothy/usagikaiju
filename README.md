@@ -1,2 +1,3 @@
-# bamarogue
-Underground River Roguelike
+# Usagi Kaiju
+
+Text-based katamari clone, jam game.
