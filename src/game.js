@@ -69,7 +69,7 @@ export class Game {
       'peach': {token: 'の', size: 2, xp: 2},
       'rabbit poop': {token: '゛', size: 1, xp: 1},
       'sake': {token: 'S', size: 3, xp: 2},
-      'toddler': {token: 'ピ', size: 3, xp: 5}
+      'toddler': {token: 'ピ', size: 3, xp: 3}
     }
   }
 
