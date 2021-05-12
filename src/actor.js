@@ -24,13 +24,16 @@ export class Actor {
     const key = Util.key(this.x, this.y)
     if (fov == undefined || key in fov) {
       const [x, y] = this.game.worldToScreen([this.x, this.y])
-      this.game.display.draw(x, y, this.token, this.color, this.background);
-
-      if (this.game.firstConfederate && this.name == 'Confederate Ghost') {
-        this.game.dialogue.play('ghost')
-        this.game.firstConfederate = false
-      }
+      this.game.display.draw(x, y, this.getToken(), this.getColor(), this.background);
     }
+  }
+
+  getToken() {
+    return this.token
+  }
+
+  getColor() {
+    return this.color
   }
 
   isVisible (fov) {

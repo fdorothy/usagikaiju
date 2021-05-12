@@ -8,28 +8,30 @@ import { Messages } from './messages'
 import { Status } from './status'
 import { Item } from './item'
 import { Draw } from './draw'
+import { Rainbow } from './rainbow'
 
 export class Game {
   constructor() {
     this.engine = null;
     this.player = null;
-    this.width = 120
-    this.height = 40
+    this.width = 70
+    this.height = 25
     this.inputDiff = [0, 0]
-    this.display = new Display({width: this.width, height: this.height, fg: Util.colors.bright, bg: 'black'});
-    document.body.appendChild(this.display.getContainer());
+    this.display = new Display({width: this.width, height: this.height, fg: Util.colors.bright, bg: 'black', fontSize: 20});
+    document.getElementById("container").appendChild(this.display.getContainer());
+    document.getElementById("container")
     this.drawer = new Draw(this.display)
     this.statusWidth = 17
-    this.messageHeight = 4
     this.mapWidth = this.width - this.statusWidth - 1
-    this.mapHeight = this.height - this.messageHeight - 1
+    this.mapHeight = this.height
+    this.messages = new Messages(this, 3)
     this.dialogue = new Dialogue(inkStoryJson, this);
-    this.messages = new Messages(this, this.statusWidth+2, this.messageHeight-1);
     this.status = new Status(this, this.statusWidth)
     this.countdown = 10
     this.lastTime = this.ms()
-    this.fps = 30
+    this.fps = 20
     this.deltaTime = 0.0
+    this.rainbow = new Rainbow(this)
 
     // handle keyboard events here
     const handleEvent = this.handleEvent
@@ -51,6 +53,18 @@ export class Game {
     this.hasMap = false
     this.startLevel()
     this.dialogue.play("title")
+  }
+
+  pushOptions(options, cb) {
+    const oldOptions = this.game.display.getOptions()
+    this.game.display.setOptions(options)
+    cb()
+    this.game.display.setOptions(oldOptions)
+  }
+
+  screenShake() {
+    this.display.getContainer().className = "shake";
+    setTimeout(() => { this.display.getContainer().className = "" }, 100)
   }
 
   timestamp() {
@@ -79,11 +93,15 @@ export class Game {
     item.setToken(itemType.token, Util.colors.blood)
     item.name = itemName
     item.size = itemType.size
+    item.color = Util.colors.important
     item.xp = itemType.xp
     item.onPickup = (player) => {
       if (this.player.size >= item.size) {
-        this.messages.push('You ate a ' + item.name + ', yum')
+        this.messages.push(item.name + ', yum +' + item.xp)
         this.player.points += item.xp
+        this.countdown += 2
+      } else {
+        this.messages.push(item.name + ' is too big to eat')
       }
     }
     this.items.push(item)
@@ -108,6 +126,25 @@ export class Game {
     this.messages.push("Use the arrow keys to move")
     this.messages.push("Eat what you can")
     //})
+  }
+
+  generateLevel1(freeCells) {
+    const items = {
+      'pellet': 20,
+      'rabbit poop': 10,
+      'peach': 5,
+      'sake': 2,
+      'toddler': 1
+    }
+
+    // spread a few rabbit pellets in each room
+    for (const [v, n] of Object.entries(items)) {
+      console.log([v, n])
+      for (let i=0; i<n; i++) {
+        const [x, y] = this.randomFreeCell(freeCells)
+        this.placeItem(v, x, y)
+      }
+    }
   }
 
   handleEvent = (e) => {
@@ -141,6 +178,8 @@ export class Game {
   }
 
   checkPlayerMovement() {
+    if (this.inputDiff[0] == 0 && this.inputDiff[1] == 0)
+      return false
     let newX = this.player.x + this.inputDiff[0];
     let newY = this.player.y + this.inputDiff[1];
     this.inputDiff = [0,0]
@@ -159,6 +198,7 @@ export class Game {
         //this.messages.push(`The stone wall is cold.`)
       }
     }
+    return true
   }
 
   handleStoryEvent(event) {
@@ -201,14 +241,16 @@ export class Game {
         await this.dialogue.act()
       } else {
         this.draw()
-        this.checkPlayerMovement()
-        this.checkItems()
+        const moved = this.checkPlayerMovement()
+        if (moved)
+          this.checkItems()
         this.removeDeadMonsters()
         for (let i=0; i<this.monsters.length; i++) {
           await this.monsters[i].act()
         }
         this.checkGameOver()
         this.draw()
+        this.rainbow.update()
         const ts = this.ms()
         const sleepTime = 1000 / this.fps - (ts - this.lastTime)
         if (sleepTime > 0) {
@@ -238,7 +280,10 @@ export class Game {
     if (item) {
       if (this.player.size >= item.size) {
         item.pickup(this.player)
+        this.screenShake()
         this.items = this.items.filter(m => !m.pickedUp)
+      } else {
+        this.messages.push(item.name + ' is too big to eat')
       }
     }
   }
@@ -310,7 +355,8 @@ export class Game {
     this.freeRooms = RNG.shuffle(digger.getRooms())
 
     this.setPlayerPositionRandom();
-    this.fillDungeon()
+    //this.fillDungeon()
+    this.generateLevel1(freeCells)
   }
 
   fillDungeon() {
@@ -365,7 +411,11 @@ export class Game {
     for (let key in this.map) {
       const [x, y] = this.worldToScreen(Util.parseKey(key))
       const v = this.map[key];
-      this.display.draw(x, y, v)
+      if (v == 'ロ') {
+        const brightness = Util.grayscale(1.0 / 10.0)
+        const color = this.rainbow.getSpriteAnim([brightness, Math.clamp(brightness-0.5, 0.0, 1.0)], 0, 0.1)
+        this.display.draw(x, y, v, color)
+      }
     }
   }
 
@@ -392,25 +442,30 @@ export class Game {
     for (let key in map) {
       const [x, y] = this.worldToScreen(Util.parseKey(key))
       let color = Color.toHex(Util.minGray)
+      let color2 = Color.toHex(Util.minGray)
       let bg = 'black'
       let v = this.map[key]
+      if (v == '#')
+        v = 'コ'
       if (key in this.fov) {
-        const light = this.fov[key]
-        if (v == '#') {
-          color = Util.grayscale(1.0 - this.fov[key] / 10.0)
-        } else {
-          color = Util.grayscale(1.0 - this.fov[key] / 10.0)
-        }
+        const flicker = this.rainbow.getSpriteAnim([1.0, 1.0-RNG.getUniform() / 10.0], 0, 1)
+        color = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker)
+        color2 = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker * 0.5)
       }
-      this.display.draw(x, y, this.map[key], color, bg)
+      if (v != '') {
+        const offset = [0.05, 0.2]
+        this.display.draw(x-offset[0], y-offset[1], v, color, bg)
+        this.display.draw(x+offset[0], y+offset[1], v, color2, bg)
+      }
     }
   }
 
   draw() {
     this.display.clear()
     this.drawMapFieldOfView()
+    //this.drawWholeMap()
     this.drawCompositeMap()
-    this.items.forEach((m) => m.draw(this.hasMap ? this.map : this.knownMap))
+    this.items.forEach((m) => m.draw(this.fov))
     this.player.draw()
     this.monsters.forEach((m) => m.draw(this.fov))
 
@@ -429,11 +484,10 @@ export class Game {
     if (this.status)
       this.status.draw()
     this.drawer.drawLine(this.statusWidth, 0, this.statusWidth, this.height, '|', '|')
-    this.drawer.drawLine(this.statusWidth, this.messageHeight, this.width, this.messageHeight, '-', '+')
   }
 
   worldToScreen([x, y]) {
-    return [x + this.statusWidth + 1, y + this.messageHeight + 1]
+    return [x + this.statusWidth + 1, y]
   }
 
   pushVariables() {

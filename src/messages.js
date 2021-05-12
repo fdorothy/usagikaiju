@@ -2,24 +2,27 @@ let Story = require('inkjs').Story;
 import { Text } from 'rot-js/lib/index';
 
 export class Messages {
-  constructor(game, offsetX, height) {
+  constructor(game, height) {
     this.game = game;
-    this.rect = [offsetX, 0, this.game.width, height]
-    this.width = this.rect[2] - this.rect[0]
-    this.height = this.rect[3] - this.rect[1]
     this.reset()
+    this.textLife = 5
+    this.height = height
+    this.text = []
   }
 
   draw() {
-    let y = this.rect[3]
     for (let i=0; i<this.text.length; i++) {
-      this.game.display.drawText(this.rect[0], y, this.text[i], this.width)
-      y--;
+      if (this.text[i][1] > 0.0) {
+        const len = this.text[i][0].length
+        const [x, y] = this.game.worldToScreen([this.game.player.x-len/2, this.game.player.y-3-i])
+        this.game.rainbow.rainbowText(x, y, this.text[i][0])
+        this.text[i][1] -= this.game.deltaTime
+      }
     }
   }
 
   push(text) {
-    this.text = [text].concat(this.text).slice(0,this.height+1)
+    this.text = [[text,this.textLife]].concat(this.text).slice(0,this.height+1)
   }
 
   reset() {

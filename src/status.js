@@ -40,12 +40,9 @@ export class Status {
   drawHero() {
     const p = this.game.player
     this.text('Usagi Kaiju ベ')
-    this.text('Satiety: ' + p.points)
+    this.text('Points: ' + p.points)
     this.text('Size: ' + p.size)
-    this.text('Time: ' + Math.floor(this.game.countdown) + ' ' + this.getSpriteAnim(this.spinnerFrames, 0, 0.5))
-    this.cursorY += 1
-    this.text('Digestive Tract:')
-    this.drawRainbow(this.game.statusWidth - 2)
+    this.text('Nap Time: ' + Math.floor(this.game.countdown) + ' ' + this.getSpriteAnim(this.spinnerFrames, 0, 0.5))
   }
 
   update() {
