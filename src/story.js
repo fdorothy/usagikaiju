@@ -31,7 +31,7 @@ export class Dialogue {
     let x1 = this.game.width-this.padding
     let y1 = this.game.height-this.padding
     this.drawBox(x0-1, y0-1, x1+1, y1+1)
-    this.drawBorder(x0, y0, x1, y1, 'ニ', 'く', 'サ')
+    this.drawBorder(x0, y0, x1, y1, '=', '{', '$')
     this.drawText()
   }
 

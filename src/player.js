@@ -26,6 +26,40 @@ export class Player extends Actor {
     return false
   }
 
+  draw() {
+    const [x, y] = this.game.worldToScreen([this.x, this.y])
+    let eyes = [0, 0]
+    let ears = [0, 0]
+    switch (this.size) {
+    case 1:
+      eyes = [-0.15, 0.0]
+      ears = [0.0, 0.1]
+      this.game.display.draw(x+eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x-eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x+ears[0], y+ears[1], '"')
+      break;
+    case 2:
+      eyes = [-0.3, 0.0]
+      ears = [0.8, 0.2]
+      this.game.display.draw(x+eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x-eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x-ears[0], y+ears[1], '(')
+      this.game.display.draw(x+ears[0], y+ears[1], ')')
+      break;
+    case 3:
+      eyes = [-0.3, 0.0]
+      ears = [0.5, 0.0]
+      const outsideEars = [1.3, 0.2]
+      this.game.display.draw(x+eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x-eyes[0], y+eyes[1], '.', Util.colors.blood)
+      this.game.display.draw(x-ears[0], y+ears[1], ')')
+      this.game.display.draw(x-outsideEars[0], y+outsideEars[1], '(')
+      this.game.display.draw(x+ears[0], y+ears[1], '(')
+      this.game.display.draw(x+outsideEars[0], y+outsideEars[1], ')')
+      break;
+    }
+  }
+
   update() {
     if (this.size < this.game.maxSize)
       this.upgrade_size()
