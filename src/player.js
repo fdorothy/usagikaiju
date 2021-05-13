@@ -46,6 +46,7 @@ export class Player extends Actor {
       this.game.display.draw(x-ears[0], y+ears[1], '(')
       this.game.display.draw(x+ears[0], y+ears[1], ')')
       break;
+    default:
     case 3:
       eyes = [-0.3, 0.0]
       ears = [0.5, 0.0]
