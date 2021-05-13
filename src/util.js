@@ -8,7 +8,8 @@ export class Util {
     'water': '#316a96',
     'important': '#f6ad0f',
     'dark': '#2e243f',
-    'gray': '#bebebe'
+    'gray': '#bebebe',
+    'black': '#000000'
   }
 
   static minGray = Color.fromString(Util.colors.dark);

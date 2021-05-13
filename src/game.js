@@ -21,13 +21,14 @@ export class Game {
     document.getElementById("container").appendChild(this.display.getContainer());
     document.getElementById("container")
     this.drawer = new Draw(this.display)
-    this.statusWidth = 17
-    this.mapWidth = this.width - this.statusWidth - 1
-    this.mapHeight = this.height
+    this.statusHeight = 5
+    this.mapWidth = this.width
+    this.mapHeight = this.height - this.statusHeight - 1
     this.messages = new Messages(this, 3)
     this.dialogue = new Dialogue(inkStoryJson, this);
-    this.status = new Status(this, this.statusWidth)
+    this.status = new Status(this, this.statusHeight)
     this.countdown = 10
+    this.pointGoal = 50
     this.lastTime = this.ms()
     this.fps = 20
     this.deltaTime = 0.0
@@ -51,7 +52,6 @@ export class Game {
     this.visible = []
     this.level = 1
     this.hasMap = false
-    this.startLevel()
     this.dialogue.play("title")
   }
 
@@ -79,15 +79,15 @@ export class Game {
 
   createItemTypes() {
     this.itemTypes = {
-      'pellet': {token: '・', size: 1, xp: 1},
-      'peach': {token: 'の', size: 2, xp: 2},
-      'rabbit poop': {token: '゛', size: 1, xp: 1},
+      'pellet': {token: '.', size: 1, xp: 1},
+      'peach': {token: '@', size: 2, xp: 2},
+      'rabbit poop': {token: ':', size: 1, xp: 1},
       'sake': {token: 'S', size: 3, xp: 2},
-      'toddler': {token: 'ピ', size: 3, xp: 3}
+      'toddler': {token: 'T', size: 3, xp: 3}
     }
   }
 
-  placeItem(itemName, x, y) {
+  placeItem(itemName, x, y, onPickup = null) {
     const itemType = this.itemTypes[itemName]
     const item = new Item(x, y, this)
     item.setToken(itemType.token, Util.colors.blood)
@@ -99,7 +99,13 @@ export class Game {
       if (this.player.size >= item.size) {
         this.messages.push(item.name + ', yum +' + item.xp)
         this.player.points += item.xp
-        this.countdown += 2
+        this.countdown += item.xp
+        this.placeItemRandomly(itemName)
+        if (this.onPickupItem != null) {
+          this.onPickupItem(itemName)
+        }
+        if (this.countdown > this.maxTime)
+          this.countdown = this.maxTime
       } else {
         this.messages.push(item.name + ' is too big to eat')
       }
@@ -110,25 +116,18 @@ export class Game {
   onExit() {
     this.level++
     this.hasMap = false
-    this.startLevel()
+    this.restart()
   }
 
-  newGame() {
-    this.startLevel()
-  }
-
-  startLevel() {
-    this.countdown = this.player.maxTime
+  level1() {
+    this.player = new Player(0, 0, this)
+    this.maxTime = 45
+    this.maxSize = 3
+    this.countdown = 45
     this.lastTime = this.ms()
     this.startTime = this.timestamp()
     this.generateMap();
-    //this.dialogue.play(`level${this.level}`, () => {
-    this.messages.push("Use the arrow keys to move")
-    this.messages.push("Eat what you can")
-    //})
-  }
 
-  generateLevel1(freeCells) {
     const items = {
       'pellet': 20,
       'rabbit poop': 10,
@@ -136,15 +135,22 @@ export class Game {
       'sake': 2,
       'toddler': 1
     }
-
-    // spread a few rabbit pellets in each room
     for (const [v, n] of Object.entries(items)) {
-      console.log([v, n])
       for (let i=0; i<n; i++) {
-        const [x, y] = this.randomFreeCell(freeCells)
-        this.placeItem(v, x, y)
+        this.placeItemRandomly(v)
       }
     }
+    this.onPickupItem = (itemName) => {
+      if (itemName == 'toddler') {
+        this.dialogue.play("level2")
+      }
+    }
+  }
+
+  placeItemRandomly(itemName) {
+    const [x, y] = this.randomFreeCell(this.freeCells)
+    const cb = this.placeItemsRandomly
+    this.placeItem(itemName, x, y, cb)
   }
 
   handleEvent = (e) => {
@@ -188,8 +194,14 @@ export class Game {
 
     let key = Util.key(this.player.x, this.player.y)
     if (this.canPlayerMove(newX, newY)) {
-      this.player.x = newX;
-      this.player.y = newY;
+      const item = this.getItem(newX, newY)
+      if (item != null && item.size > this.player.size) {
+        this.screenShake()
+        this.countdown -= item.xp
+      } else {
+        this.player.x = newX;
+        this.player.y = newY;
+      }
     } else {
       const m = this.getMonster(newX, newY);
       if (m) {
@@ -204,26 +216,14 @@ export class Game {
   handleStoryEvent(event) {
     const name = event[0].trim()
     switch (name) {
-    case ':newgame':
-      this.newGame();
+    case ':level1':
+      this.level1();
       break;
     case ':restart':
       this.restart()
       break;
     case ':continue':
-      this.startLevel()
-      break;
-    case ':upgrade_size':
-      if (this.player.upgrade_size())
-        this.dialogue.play("valid_selection")
-      else
-        this.dialogue.play("invalid_selection")
-      break;
-    case ':upgrade_time':
-      if (this.player.upgrade_time())
-        this.dialogue.play("valid_selection")
-      else
-        this.dialogue.play("invalid_selection")
+      this.level1()
       break;
     default: break;
     }
@@ -251,6 +251,7 @@ export class Game {
         this.checkGameOver()
         this.draw()
         this.rainbow.update()
+        this.player.update()
         const ts = this.ms()
         const sleepTime = 1000 / this.fps - (ts - this.lastTime)
         if (sleepTime > 0) {
@@ -290,12 +291,12 @@ export class Game {
 
   checkGameOver() {
     if (this.player.dead) {
-      this.dialogue.play("upgrade")
+      this.dialogue.play("gameover")
     }
 
     this.countdown -= this.deltaTime
     if (this.countdown <= 0) {
-      this.dialogue.play("upgrade")
+      this.dialogue.play("gameover")
       this.countdown = 0.0
     }
   }
@@ -338,7 +339,7 @@ export class Game {
     this.items = []
     this.monsters = []
     let digger = new Map.Digger(this.mapWidth, this.mapHeight, {roomWidth: [10,15], roomHeight: [10,15], dugPercentage: 0.6});
-    let freeCells = [];
+    this.freeCells = [];
 
     let digCallback = function(x, y, value) {
       let key = Util.key(x, y);
@@ -346,7 +347,7 @@ export class Game {
         this.map[key] = "#";
       } else {
         this.map[key] = " ";
-        freeCells.push(key);
+        this.freeCells.push(key);
       }
     }
 
@@ -355,8 +356,7 @@ export class Game {
     this.freeRooms = RNG.shuffle(digger.getRooms())
 
     this.setPlayerPositionRandom();
-    //this.fillDungeon()
-    this.generateLevel1(freeCells)
+    return this.freeCells
   }
 
   fillDungeon() {
@@ -445,17 +445,15 @@ export class Game {
       let color2 = Color.toHex(Util.minGray)
       let bg = 'black'
       let v = this.map[key]
-      if (v == '#')
-        v = 'コ'
-      if (key in this.fov) {
-        const flicker = this.rainbow.getSpriteAnim([1.0, 1.0-RNG.getUniform() / 10.0], 0, 1)
-        color = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker)
-        color2 = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker * 0.5)
-      }
-      if (v != '') {
-        const offset = [0.05, 0.2]
-        this.display.draw(x-offset[0], y-offset[1], v, color, bg)
-        this.display.draw(x+offset[0], y+offset[1], v, color2, bg)
+      if (v == '#') {
+        if (key in this.fov) {
+          const flicker = this.rainbow.getSpriteAnim([1.0, 1.0-RNG.getUniform() / 10.0], 0, 1)
+          color = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker)
+          color2 = Util.grayscale((1.0 - this.fov[key] / 10.0)*flicker * 0.5)
+        }
+        const offset = [0.2, 0.1]
+        this.display.draw(x-offset[0], y-offset[1], '.', color, bg)
+        this.display.draw(x+offset[0], y+offset[1], ';', color2, bg)
       }
     }
   }
@@ -483,18 +481,17 @@ export class Game {
       this.messages.draw()
     if (this.status)
       this.status.draw()
-    this.drawer.drawLine(this.statusWidth, 0, this.statusWidth, this.height, '|', '|')
+    this.drawer.drawLine(0, this.statusHeight, this.width, this.statusHeight, '-', '-')
   }
 
   worldToScreen([x, y]) {
-    return [x + this.statusWidth + 1, y]
+    return [x, y + this.statusHeight + 1]
   }
 
   pushVariables() {
     this.dialogue.story.variablesState["points"] = this.player.points
     this.dialogue.story.variablesState["size"] = this.player.size
-    this.dialogue.story.variablesState["time"] = this.player.maxTime
+    this.dialogue.story.variablesState["time"] = this.maxTime
     this.dialogue.story.variablesState["size_cost"] = this.player.upgrade_size_pts
-    this.dialogue.story.variablesState["time_cost"] = this.player.upgrade_time_pts
   }
 }

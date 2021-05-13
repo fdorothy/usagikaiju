@@ -25,7 +25,7 @@ export class Item extends Actor {
 
   getToken() {
     if (this.game.player.size < this.size) {
-      return this.game.rainbow.getSpriteAnim([this.token, 'ミ'], 0, 0.1)
+      return this.token
     } else {
       return this.token
     }
@@ -33,7 +33,7 @@ export class Item extends Actor {
 
   getColor() {
     if (this.game.player.size < this.size) {
-      return this.game.rainbow.getSpriteAnim([this.color, Util.colors.blood], 0, 0.1)
+      return this.game.rainbow.getSpriteAnim([this.color, Util.colors.blood], 0, 0.5)
     } else {
       return this.color
     }

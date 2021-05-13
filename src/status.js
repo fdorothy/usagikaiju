@@ -3,11 +3,11 @@ import { Text } from 'rot-js/lib/index';
 import { Util } from './util'
 
 export class Status {
-  constructor(game, width) {
+  constructor(game, height) {
     this.game = game;
     this.monsters = []
     this.items = []
-    this.rect = [0, 0, width, this.game.height]
+    this.rect = [0, 0, this.game.width, height]
     this.width = this.rect[2] - this.rect[0]
     this.height = this.rect[3] - this.rect[1]
     this.cursorY = 1
@@ -22,50 +22,10 @@ export class Status {
 
   draw() {
     this.cursorY = 1
-    this.drawHero()
-    this.cursorY += 2
-    this.text('Visible:')
-    this.cursorY += 1
-    this.monsters.forEach((m) => {
-      this.drawMonster(m)
-      this.cursorY += 1
-    })
-    this.items.forEach((m) => {
-      this.drawItem(m)
-      this.cursorY += 1
-    })
-    this.update()
-  }
-
-  drawHero() {
     const p = this.game.player
-    this.text('Usagi Kaiju ベ')
-    this.text('Points: ' + p.points)
-    this.text('Size: ' + p.size)
-    this.text('Nap Time: ' + Math.floor(this.game.countdown) + ' ' + this.getSpriteAnim(this.spinnerFrames, 0, 0.5))
-  }
-
-  update() {
-    if (this.timeTokenTimer <= 0.0) {
-      this.animFrame += 1
-      this.timeTokenTimer += this.interval
-    }
-    this.timeTokenTimer -= this.game.deltaTime
-  }
-
-  getSpriteAnim(frames, offset = 0, scalar = 1) {
-    return frames[(offset + Math.floor(this.animFrame * scalar)) % frames.length]
-  }
-
-  drawRainbow(width) {
-    for (let x=0; x<width; x++) {
-      const c = '='
-      if (x == 0)
-        c = this.getSpriteAnim(['@', 'o'], 0, 0.2)
-      if (x == width-1)
-        c = this.getSpriteAnim(['<', '-'], 0, 0.2)
-      this.game.display.draw(this.cursorX+x, this.cursorY, c, this.getSpriteAnim(this.rainbow, x, 0.2))
-    }
+    this.bar('Nap Time: ', this.game.countdown, this.game.maxTime, Util.colors.blood)
+    this.bar('Food:     ', p.points, p.upgrade_size_pts, Util.colors.water)
+    this.bar('Size:     ', p.size, this.game.maxSize, Util.colors.water, true)
   }
 
   drawItem(item) {
@@ -89,7 +49,25 @@ export class Status {
     this.cursorY += 1
   }
 
-  bar(text, value, max, color) {
-    return `${text}: %b{${color}}${value}/${max}%b{}`
+  bar(text, value, max, color, restrictSize = false) {
+    this.game.display.drawText(1, this.cursorY, text)
+
+    const offset = text.length + 2
+    let w = this.width - offset - 1
+    if (restrictSize)
+      w = max
+    for (let x=0; x<w; x++) {
+      const t = x / (w-1)
+      const c = color
+      if (t >= value / max) {
+        c = Util.colors.gray
+      }
+      const jitter = [0.1, 0.1]
+      if (x % 2 == 0)
+        this.game.display.draw(x+offset, this.cursorY-jitter[1], 'o', c)
+      else
+        this.game.display.draw(x+offset, this.cursorY+jitter[1], 'o', c)
+    }
+    this.cursorY += 1
   }
 }
