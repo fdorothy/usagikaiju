@@ -1,5 +1,5 @@
 import { DIRS } from 'rot-js/lib/index';
-import { Map, Display, Engine, KEYS, RNG, FOV, Color } from 'rot-js/lib/index';
+import { Map, Display, Engine, KEYS, RNG, FOV, Color, Path } from 'rot-js/lib/index';
 import { Player } from './player'
 import { Util } from './util'
 import { Dialogue } from './story'
@@ -79,11 +79,11 @@ export class Game {
 
   createItemTypes() {
     this.itemTypes = {
-      'pellet': {token: '.', size: 1, xp: 1},
-      'peach': {token: '@', size: 2, xp: 2},
-      'rabbit poop': {token: ':', size: 1, xp: 1},
-      'sake': {token: 'S', size: 3, xp: 2},
-      'toddler': {token: 'T', size: 3, xp: 3}
+      'pellet': {token: '.', size: 1, xp: 1, moves: false},
+      'peach': {token: '@', size: 2, xp: 2, moves: false},
+      'rabbit poop': {token: ':', size: 1, xp: 1, moves: false},
+      'sake': {token: 'S', size: 3, xp: 2, moves: false},
+      'toddler': {token: 'T', size: 3, xp: 3, moves: true}
     }
   }
 
@@ -95,6 +95,7 @@ export class Game {
     item.size = itemType.size
     item.color = Util.colors.important
     item.xp = itemType.xp
+    item.moves = itemType.moves
     item.onPickup = (player) => {
       if (this.player.size >= item.size) {
         this.messages.push(item.name + ', yum +' + item.xp)
@@ -127,6 +128,7 @@ export class Game {
     this.lastTime = this.ms()
     this.startTime = this.timestamp()
     this.generateMap();
+    this.resetMonsterPathFinder()
 
     const items = {
       'pellet': 20,
@@ -145,6 +147,10 @@ export class Game {
         this.dialogue.play("level2")
       }
     }
+  }
+
+  resetMonsterPathFinder() {
+    this.monsterPathFinder = new Path.AStar(this.player.x, this.player.y, (x, y) => this.canMonsterMove(x,y))
   }
 
   placeItemRandomly(itemName) {
@@ -198,6 +204,7 @@ export class Game {
       if (item != null && item.size > this.player.size) {
         this.screenShake()
         this.countdown -= item.xp
+        this.messages.push("I'm not big enough yet!")
       } else {
         this.player.x = newX;
         this.player.y = newY;
@@ -236,34 +243,58 @@ export class Game {
   async mainLoop() {
     while (1) {
       if (this.dialogue.showing) {
-        this.display.clear()
-        this.pushVariables()
-        await this.dialogue.act()
+        await this.mainDialogue()
       } else {
-        this.draw()
-        const moved = this.checkPlayerMovement()
-        if (moved)
-          this.checkItems()
-        this.removeDeadMonsters()
-        for (let i=0; i<this.monsters.length; i++) {
-          await this.monsters[i].act()
-        }
-        this.checkGameOver()
-        this.draw()
-        this.rainbow.update()
-        this.player.update()
-        const ts = this.ms()
-        const sleepTime = 1000 / this.fps - (ts - this.lastTime)
-        if (sleepTime > 0) {
-          await this.sleep(sleepTime)
-          this.deltaTime = 1 / this.fps
-        } else {
-          await this.sleep(10)
-          this.deltaTime = 1 / this.fps
-        }
-        this.lastTime = ts
+        await this.mainDungeon()
       }
     }
+  }
+
+  async mainDialogue() {
+    this.display.clear()
+    this.pushVariables()
+    await this.dialogue.act()
+  }
+
+  async mainDungeon() {
+    // update the player's position
+    const moved = this.checkPlayerMovement()
+
+    // reset pathfinding if we moved
+    if (moved)
+      this.resetMonsterPathFinder()
+    for (let i in this.items) {
+      if (moved) {
+        this.items[i].calculatePath()
+      }
+      this.items[i].act()
+    }
+
+    // check for item pickup if we moved anywhere
+    if (moved)
+      this.checkItems()
+
+    // update everything
+    this.rainbow.update()
+    this.player.update()
+
+    // see if we lost...
+    this.checkGameOver()
+
+    // finally draw
+    this.draw()
+
+    // update our timers
+    const ts = this.ms()
+    const sleepTime = 1000 / this.fps - (ts - this.lastTime)
+    if (sleepTime > 0) {
+      await this.sleep(sleepTime)
+      this.deltaTime = 1 / this.fps
+    } else {
+      await this.sleep(10)
+      this.deltaTime = 1 / this.fps
+    }
+    this.lastTime = ts
   }
 
   removeDeadMonsters() {
@@ -302,8 +333,6 @@ export class Game {
   }
 
   canMonsterMove(x, y) {
-    if (this.getMonster(x, y))
-      return false
     const key = Util.key(x,y)
     return ((key in this.map && this.map[key] != '#'))
   }
@@ -493,5 +522,15 @@ export class Game {
     this.dialogue.story.variablesState["size"] = this.player.size
     this.dialogue.story.variablesState["time"] = this.maxTime
     this.dialogue.story.variablesState["size_cost"] = this.player.upgrade_size_pts
+  }
+
+  pathToPlayer(x, y) {
+    let path = []
+    this.monsterPathFinder.compute(x, y, (x,y) => path.push([x,y]))
+
+    // we do not care about the first position which is the same as x,y
+    path.shift()
+
+    return path
   }
 }
