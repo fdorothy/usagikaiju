@@ -18,6 +18,7 @@ export class Player extends Actor {
 
   upgrade_size() {
     if (this.points >= this.upgrade_size_pts) {
+      this.game.play_sfx('achieved')
       this.points -= this.upgrade_size_pts
       this.size++
       this.upgrade_size_pts *= 2

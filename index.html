@@ -38,8 +38,21 @@
         90% { transform: translate(1px, 2px) rotate(0deg); }
         100% { transform: translate(1px, -2px) rotate(-1deg); }
     }
+
+    .blink_slow {
+        animation: blinking 0.5s infinite;
+    }
+
+    .blink_fast {
+        animation: blinking 0.25s infinite;
+    }
+
+    @keyframes blinking {
+        0% { background-color: #111 }
+        100% { background-color: #411 }
+    }
   </style>
-  <body style="margin: 0px; background-color: #111;">
+  <body style="margin: 0px; background-color: #111;" id="body">
     <script src="./dist/bundle.js"></script>
     <div id="container"></div>
   </body>

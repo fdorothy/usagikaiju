@@ -31,7 +31,7 @@ export class Dialogue {
     let x1 = this.game.width-this.padding
     let y1 = this.game.height-this.padding
     this.drawBox(x0-1, y0-1, x1+1, y1+1)
-    this.drawBorder(x0, y0, x1, y1, '=', '{', '$')
+    this.drawBorder(x0, y0, x1, y1, '-', '|', '+')
     this.drawText()
   }
 
@@ -75,6 +75,7 @@ export class Dialogue {
     }
     if (event.keyCode == 13) {
       if (this.story.canContinue) {
+        //this.game.play_sfx('arrow_hit')
         this.resetText()
         this.continue()
         resolve(true)
@@ -153,20 +154,20 @@ export class Dialogue {
   drawBorder(x0, y0, x1, y1, vx, vy, vc) {
     let x = 0, y = 0;
     for (y=y0; y<=y1; y++) {
-      this.game.display.draw(x0+1, y, vy)
+      this.game.display.draw(x0, y, vy)
     }
     for (y=y0; y<=y1; y++) {
-      this.game.display.draw(x1-1, y, vy)
+      this.game.display.draw(x1, y, vy)
     }
-    for (x=x0-1; x<=x1+1; x++) {
+    for (x=x0; x<=x1; x++) {
       this.game.display.draw(x, y0, vx)
     }
-    for (x=x0-1; x<=x1+1; x++) {
+    for (x=x0; x<=x1; x++) {
       this.game.display.draw(x, y1, vx)
     }
-    this.game.display.draw(x0-2, y0, vc)
-    this.game.display.draw(x0-2, y1, vc)
-    this.game.display.draw(x1+2, y0, vc)
-    this.game.display.draw(x1+2, y1, vc)
+    this.game.display.draw(x0, y0, vc)
+    this.game.display.draw(x0, y1, vc)
+    this.game.display.draw(x1, y0, vc)
+    this.game.display.draw(x1, y1, vc)
   }
 }

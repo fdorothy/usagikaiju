@@ -1,5 +1,6 @@
 import { DIRS } from 'rot-js/lib/index';
 import { Map, Display, Engine, KEYS, RNG, FOV, Color, Path } from 'rot-js/lib/index';
+import { Room } from 'rot-js/lib/map/features';
 import { Player } from './player'
 import { Util } from './util'
 import { Dialogue } from './story'
@@ -9,6 +10,7 @@ import { Status } from './status'
 import { Item } from './item'
 import { Draw } from './draw'
 import { Rainbow } from './rainbow'
+let Pizzicato = require('pizzicato')
 
 export class Game {
   constructor() {
@@ -33,6 +35,17 @@ export class Game {
     this.fps = 20
     this.deltaTime = 0.0
     this.rainbow = new Rainbow(this)
+    this.blinking = false
+    this.ignoreItemId = -1
+
+    // load our little sound effects
+    this.sfx = {}
+    const sfx_names = ['coin', 'bling', 'hit', 'achieved', 'arrow_hit'].map((item) => this.load_sfx(item))
+    this.sfx['nearly_dead'] =
+      new Pizzicato.Sound({ 
+        source: 'file',
+        options: { path: './sounds/nearly_dead.ogg', loop: true }
+      })
 
     // handle keyboard events here
     const handleEvent = this.handleEvent
@@ -40,6 +53,18 @@ export class Game {
 
     this.restart()
     this.mainLoop()
+  }
+
+  load_sfx(name) {
+    this.sfx[name] =
+      new Pizzicato.Sound({ 
+        source: 'file',
+        options: { path: './sounds/' + name + '.ogg' }
+      })
+  }
+
+  play_sfx(name) {
+    this.sfx[name].clone().play()
   }
 
   static debug = false
@@ -64,7 +89,20 @@ export class Game {
 
   screenShake() {
     this.display.getContainer().className = "shake";
+    this.play_sfx('hit')
     setTimeout(() => { this.display.getContainer().className = "" }, 100)
+  }
+
+  blinkScreen(value) {
+    if (value && !this.blinking) {
+      document.getElementById("body").className = "blink_slow"
+      this.sfx['nearly_dead'].play()
+    }
+    if (!value && this.blinking) {
+      document.getElementById("body").className = ""
+      this.sfx['nearly_dead'].stop()
+    }
+    this.blinking = value
   }
 
   timestamp() {
@@ -83,7 +121,8 @@ export class Game {
       'peach': {token: '@', size: 2, xp: 2, moves: false},
       'rabbit poop': {token: ':', size: 1, xp: 1, moves: false},
       'sake': {token: 'S', size: 3, xp: 2, moves: false},
-      'toddler': {token: 'T', size: 3, xp: 3, moves: true}
+      'toddler': {token: 'T', size: 3, xp: 3, moves: true, interval: 0.75, slowInterval: 1.5},
+      'parent': {token: 'P', size: 4, xp: 10, moves: true, interval: 0.5, slowInterval: 1.0}
     }
   }
 
@@ -101,6 +140,7 @@ export class Game {
         this.messages.push(item.name + ', yum +' + item.xp)
         this.player.points += item.xp
         this.countdown += item.xp
+        this.play_sfx('bling')
         this.placeItemRandomly(itemName)
         if (this.onPickupItem != null) {
           this.onPickupItem(itemName)
@@ -122,6 +162,32 @@ export class Game {
 
   level1() {
     this.player = new Player(0, 0, this)
+    this.maxTime = 20
+    this.maxSize = 2
+    this.countdown = 20
+    this.lastTime = this.ms()
+    this.startTime = this.timestamp()
+    this.generateSingleRoom(Math.floor(this.width/2)-10, Math.floor(this.height/2)-10, 15, 15);
+    this.resetMonsterPathFinder()
+
+    const items = {
+      'pellet': 5,
+      'rabbit poop': 3,
+    }
+    for (const [v, n] of Object.entries(items)) {
+      for (let i=0; i<n; i++) {
+        this.placeItemRandomly(v)
+      }
+    }
+    this.onUpdate = () => {
+      if (this.player.size == 2) {
+        this.dialogue.play("level2")
+      }
+    }
+  }
+
+  level2() {
+    this.player = new Player(0, 0, this)
     this.maxTime = 45
     this.maxSize = 3
     this.countdown = 45
@@ -142,9 +208,46 @@ export class Game {
         this.placeItemRandomly(v)
       }
     }
+    this.onUpdate = () => {
+    }
     this.onPickupItem = (itemName) => {
       if (itemName == 'toddler') {
-        this.dialogue.play("level2")
+        this.dialogue.play("level3")
+      }
+    }
+  }
+
+  level3() {
+    this.player = new Player(0, 0, this)
+    this.player.size = 3
+    this.maxTime = 60
+    this.maxSize = 4
+    this.countdown = 45
+    this.lastTime = this.ms()
+    this.startTime = this.timestamp()
+    this.generateMap();
+    this.resetMonsterPathFinder()
+
+    const items = {
+      'pellet': 20,
+      'rabbit poop': 10,
+      'peach': 5,
+      'sake': 2,
+      'parent': 2
+    }
+    for (const [v, n] of Object.entries(items)) {
+      for (let i=0; i<n; i++) {
+        this.placeItemRandomly(v)
+      }
+    }
+    this.onUpdate = () => {
+    }
+    this.parents = 2
+    this.onPickupItem = (itemName) => {
+      if (itemName == 'parent') {
+        this.parents--
+        if (this.parents == 0)
+          this.dialogue.play("level4")
       }
     }
   }
@@ -224,13 +327,25 @@ export class Game {
     const name = event[0].trim()
     switch (name) {
     case ':level1':
+      this.lastLevel = ':level1'
       this.level1();
+      break;
+    case ':level2':
+      this.lastLevel = ':level2'
+      this.level2();
+      break;
+    case ':level3':
+      this.lastLevel = ':level3'
+      this.level3();
+      break;
+    case ':level4':
+      this.level4();
       break;
     case ':restart':
       this.restart()
       break;
     case ':continue':
-      this.level1()
+      this.handleStoryEvent([this.lastLevel])
       break;
     default: break;
     }
@@ -251,6 +366,7 @@ export class Game {
   }
 
   async mainDialogue() {
+    this.blinkScreen(false)
     this.display.clear()
     this.pushVariables()
     await this.dialogue.act()
@@ -277,9 +393,14 @@ export class Game {
     // update everything
     this.rainbow.update()
     this.player.update()
+    if (this.onUpdate)
+      this.onUpdate()
 
     // see if we lost...
     this.checkGameOver()
+
+    // are we low on time? if so, blink the background
+    this.blinkScreen(this.countdown < 10)
 
     // finally draw
     this.draw()
@@ -312,7 +433,6 @@ export class Game {
     if (item) {
       if (this.player.size >= item.size) {
         item.pickup(this.player)
-        this.screenShake()
         this.items = this.items.filter(m => !m.pickedUp)
       } else {
         this.messages.push(item.name + ' is too big to eat')
@@ -334,6 +454,9 @@ export class Game {
 
   canMonsterMove(x, y) {
     const key = Util.key(x,y)
+    const item = this.getItem(x, y)
+    if (item && item.id != this.ignoreItemId && item.moves)
+      return false
     return ((key in this.map && this.map[key] != '#'))
   }
 
@@ -360,6 +483,31 @@ export class Game {
         return m;
     }
     return null;
+  }
+
+  generateSingleRoom(x, y, w, h) {
+    this.map = {};
+    this.knownMap = {};
+    this.items = []
+    this.monsters = []
+    this.freeCells = [];
+
+    for (let i=x-1; i<x+w+1; i++) {
+      for (let j=y-1; j<y+h+1; j++) {
+        let key = Util.key(i, j);
+        if (i == x-1 || i == x+w || j == y-1 || j == y+h) {
+          this.map[key] = "#";
+        } else {
+          this.map[key] = " ";
+          this.freeCells.push(key)
+        }
+      }
+    }
+
+    this.freeRooms = [new Room(x, y, x+w, y+h, undefined, undefined)]
+
+    this.setPlayerPositionRandom();
+    return this.freeCells
   }
 
   generateMap() {
@@ -524,9 +672,11 @@ export class Game {
     this.dialogue.story.variablesState["size_cost"] = this.player.upgrade_size_pts
   }
 
-  pathToPlayer(x, y) {
+  pathToPlayer(x, y, ignoreItemId) {
     let path = []
+    this.ignoreItemId = ignoreItemId
     this.monsterPathFinder.compute(x, y, (x,y) => path.push([x,y]))
+    this.ignoreItemId = -1
 
     // we do not care about the first position which is the same as x,y
     path.shift()

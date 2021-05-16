@@ -4,6 +4,8 @@ import { Combat } from './combat'
 import { Actor } from './actor'
 
 export class Item extends Actor {
+  static idIndex = 1
+
   constructor(x, y, game) {
     super(x, y, game)
     this.setToken('i', Util.colors.blood)
@@ -14,8 +16,10 @@ export class Item extends Actor {
     this.moves = false
     this.path = []
     this.interval = 0.75
+    this.slowInterval = 0.75
     this.maxRange = 10
     this.lastMove = this.interval
+    this.id = Item.idIndex++
   }
 
   pickup(player) {
@@ -32,8 +36,12 @@ export class Item extends Actor {
     if (this.moves) {
       this.lastMove -= this.game.deltaTime
       if (this.lastMove <= 0.0) {
-        this.lastMove += this.interval
-        if (this.path.length > 1 && this.path.length <= this.maxRange) {
+        if (this.path.length > this.maxRange)
+          this.lastMove += this.interval
+        else
+          this.lastMove += this.slowInterval
+
+        if (this.path.length > 1) {
           if (this.size > this.game.player.size) {
             const [x, y] = this.path.shift()
             this.x = x
@@ -41,13 +49,11 @@ export class Item extends Actor {
           } else {
             this.wander()
           }
-        } else {
-          if (this.path.length == 1) {
+        } else if (this.path.length == 1) {
+          if (this.size > this.game.player.size) {
             this.game.countdown -= this.xp / 10.0
             this.game.screenShake()
             this.game.messages.push("Ouch!")
-          } else {
-            this.wander()
           }
         }
       }
@@ -83,7 +89,7 @@ export class Item extends Actor {
 
   calculatePath() {
     if (this.moves) {
-      this.path = this.game.pathToPlayer(this.x, this.y)
+      this.path = this.game.pathToPlayer(this.x, this.y, this.id)
     }
   }
 
