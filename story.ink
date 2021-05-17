@@ -21,6 +21,8 @@ Usagi Kaiju (The Giant Rabbit Monster)
 
 You small bunny.
 
+:music
+
 You are so cute!
 
 :br
