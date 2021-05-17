@@ -14,6 +14,9 @@ export class Player extends Actor {
     this.promise = null
     this.maxTime = 15
     this.name = 'player'
+    this.interval = 0.5
+    this.nextTurn = this.interval
+    this.selfHarm = true
   }
 
   upgrade_size() {
@@ -65,6 +68,11 @@ export class Player extends Actor {
   update() {
     if (this.size < this.game.maxSize)
       this.upgrade_size()
+    this.nextTurn -= this.game.deltaTime
+    if (this.nextTurn <= 0.0) {
+      this.nextTurn += this.interval
+      this.selfHarm = true
+    }
   }
 
   act() {
@@ -79,6 +87,15 @@ export class Player extends Actor {
         handleEvent(e, resolve)
       }, {once: true})
     })
+  }
+
+  hurtSelf(timePenalty) {
+    if (this.selfHarm) {
+      this.game.screenShake()
+      this.game.countdown -= timePenalty
+      this.game.messages.push("I'm not big enough yet!")
+      this.selfHarm = false
+    }
   }
 
   addXP(xp) {

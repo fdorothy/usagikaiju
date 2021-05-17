@@ -305,9 +305,8 @@ export class Game {
     if (this.canPlayerMove(newX, newY)) {
       const item = this.getItem(newX, newY)
       if (item != null && item.size > this.player.size) {
-        this.screenShake()
-        this.countdown -= item.xp
-        this.messages.push("I'm not big enough yet!")
+        if (!item.moves)
+          this.player.hurtSelf(1)
       } else {
         this.player.x = newX;
         this.player.y = newY;

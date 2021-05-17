@@ -51,7 +51,7 @@ export class Item extends Actor {
           }
         } else if (this.path.length == 1) {
           if (this.size > this.game.player.size) {
-            this.game.countdown -= this.xp / 10.0
+            this.game.countdown -= 2
             this.game.screenShake()
             this.game.messages.push("Ouch!")
           }

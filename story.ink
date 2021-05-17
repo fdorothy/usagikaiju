@@ -8,11 +8,14 @@ VAR time_cost = 10
 
 == title ==
 
-Usagi Kaiju
+Usagi Kaiju (The Giant Rabbit Monster)
 
-By @redmountainman1 for Text Only Jam 2 (8-bits-to-infinity).
+  @redmountainman1
+  Made for Text Only Jam 2 [8 Bits to Infinity]
 
- + [New Game] -> level1
+:br
+
+-> level1
 
 == level1 ==
 
