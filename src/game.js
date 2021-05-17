@@ -46,6 +46,10 @@ export class Game {
         source: 'file',
         options: { path: './sounds/nearly_dead.ogg', loop: true }
       })
+    this.music = new Pizzicato.Sound({
+      source: 'file',
+      options: { path: './sounds/8bitninja.mp3', loop: true }
+    }, () => this.playMusic())
 
     // handle keyboard events here
     const handleEvent = this.handleEvent
@@ -53,6 +57,12 @@ export class Game {
 
     this.restart()
     this.mainLoop()
+  }
+
+  playMusic() {
+    this.music.attack = 0.9
+    this.music.volume = 0.6
+    this.music.play()
   }
 
   load_sfx(name) {
@@ -365,6 +375,7 @@ export class Game {
   }
 
   async mainDialogue() {
+    this.music.volume = 0.6
     this.blinkScreen(false)
     this.display.clear()
     this.pushVariables()
@@ -372,6 +383,8 @@ export class Game {
   }
 
   async mainDungeon() {
+    this.music.volume = 0.9
+
     // update the player's position
     const moved = this.checkPlayerMovement()
 

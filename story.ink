@@ -10,7 +10,7 @@ VAR time_cost = 10
 
 Usagi Kaiju (The Giant Rabbit Monster)
 
-  @redmountainman1
+  By @redmountainman1
   Made for Text Only Jam 2 [8 Bits to Infinity]
 
 :br
@@ -61,9 +61,10 @@ Avoid nap time.
 
 Ready to play?
 
-:level1
-
--> DONE
+ + [Let's do this] ->
+   :level1
+   -> DONE
+ + [Wait, what?] -> level1
 
 == level2 ==
 
@@ -149,7 +150,7 @@ Better get bigger.
 
 == level4 ==
 
-You devour them each like frail leaves of romaine.
+You munch on your owners like frail leaves of romaine.
 
 I am impressed.
 
@@ -175,6 +176,8 @@ No. Not this time.
 
 The world fades away, and you are back where you started.
 
+A small bunny.
+
 :br
 
 The cage's metal bars rattle as the toddler strikes.
@@ -192,6 +195,8 @@ The little water they left you with spills out of its bowl.
 There is no escape from these hells, but a small rabbit can dream.
 
 :br
+
+GAME OVER
 
 -> title
 
