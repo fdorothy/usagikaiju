@@ -356,6 +356,9 @@ export class Game {
         options: { path: './sounds/8bitninja.mp3', loop: true }
       }, () => this.playMusic())
       break;
+    case ':stopmusic':
+      this.music.stop()
+      break;
     case ':continue':
       this.handleStoryEvent([this.lastLevel])
       break;

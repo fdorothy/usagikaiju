@@ -61,11 +61,20 @@ Avoid nap time.
 
 :br
 
+-> level1ready
+
+== level1ready ==
+
 Ready to play?
 
  + [Let's do this] ->
    :level1
    -> DONE
+ * [Stop this crappy music first] ->
+   OK, fine...
+   :stopmusic
+   :br
+   -> level1ready
  + [Wait, what?] -> level1
 
 == level2 ==
@@ -216,6 +225,11 @@ ZzzzZZzzZZzz
 
 Ready to play again?
 
-:continue
-
-->DONE
+ * [Let's do this] ->
+   :continue
+   -> DONE
+ * [Stop this god forsaken music first] ->
+   :stopmusic
+   Fine!
+   :continue
+   -> DONE
