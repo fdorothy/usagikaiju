@@ -8,6 +8,7 @@ export class Messages {
     this.textLife = 2
     this.height = height
     this.text = []
+    this.quickTip = "La la la, I love carrots..."
   }
 
   draw() {
@@ -27,7 +28,7 @@ export class Messages {
       if (item != null) {
         txt = "Hmm, " + item.name + " (" + item.token + "), it looks " + (item.size <= this.game.player.size ? "tasty" : "too big")
       } else {
-        txt = "La la la, I love carrots..."
+        txt = this.quickTip
       }
       const [x, y] = [this.game.width/2-txt.length/2, this.game.statusHeight-1]
       this.game.display.drawText(x, y, txt)

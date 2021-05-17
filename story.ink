@@ -71,8 +71,7 @@ Ready to play?
    :level1
    -> DONE
  * [Stop this crappy music first] ->
-   OK, fine...
-   :stopmusic
+   Tough shit, kiddo.
    :br
    -> level1ready
  + [Wait, what?] -> level1
@@ -225,11 +224,10 @@ ZzzzZZzzZZzz
 
 Ready to play again?
 
- * [Let's do this] ->
+ + [Let's do this] ->
    :continue
    -> DONE
  * [Stop this god forsaken music first] ->
-   :stopmusic
-   Fine!
+   Tough shit, kiddo.
    :continue
    -> DONE

@@ -146,7 +146,7 @@ export class Game {
       if (this.player.size >= item.size) {
         this.messages.push(item.name + ', yum +' + item.xp)
         this.player.points += item.xp
-        this.countdown += item.xp
+        this.countdown += 2
         this.play_sfx('bling')
         this.placeItemRandomly(itemName)
         if (this.onPickupItem != null) {
@@ -169,7 +169,8 @@ export class Game {
 
   level1() {
     this.player = new Player(0, 0, this)
-    this.maxTime = 20
+    this.messages.quickTip = "Eat enough food to grow big before nap time"
+    this.maxTime = 25
     this.maxSize = 2
     this.countdown = 20
     this.lastTime = this.ms()
@@ -195,7 +196,8 @@ export class Game {
 
   level2() {
     this.player = new Player(0, 0, this)
-    this.maxTime = 45
+    this.messages.quickTip = "Eat enough food to grow big and take out the toddler (T)"
+    this.maxTime = 50
     this.maxSize = 3
     this.countdown = 45
     this.lastTime = this.ms()
@@ -226,8 +228,9 @@ export class Game {
 
   level3() {
     this.player = new Player(0, 0, this)
+    this.messages.quickTip = "Eat enough food to grow big and take out the parents (P)"
     this.player.size = 3
-    this.maxTime = 60
+    this.maxTime = 65
     this.maxSize = 4
     this.countdown = 45
     this.lastTime = this.ms()
